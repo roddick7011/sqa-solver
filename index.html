@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="解題小幫手" />
+    <title>解題小幫手 — 國高中康乃爾錯題本</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Service Worker 策略：
+      // - 正式環境（localhost 或 https）：註冊 SW 啟用離線快取
+      // - dev 環境（用 IP 從手機訪問）：清掉所有舊 SW 和 cache，
+      //   避免 Vite HMR 改的程式碼被舊版卡住
+      if ('serviceWorker' in navigator) {
+        const isProd = ['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'https:'
+        if (isProd) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {})
+          })
+        } else {
+          // dev：解除所有 SW + 清 cache，避免舊版干擾
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(reg => reg.unregister())
+          })
+          if (window.caches) {
+            caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

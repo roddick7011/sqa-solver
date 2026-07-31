@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    overscroll-behavior-y: none;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-3 text-white font-medium shadow-sm active:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-4 py-3 text-slate-700 font-medium shadow-sm active:bg-slate-50 transition-colors;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-slate-600 active:bg-slate-100 transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+  }
+}
+
+/* Cornell note grid (desktop preview); mobile uses stacked layout */
+.cornell-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "title title"
+    "cues  notes"
+    "summary summary";
+  gap: 0.75rem;
+}
+.cornell-grid > .area-title   { grid-area: title; }
+.cornell-grid > .area-cues    { grid-area: cues; }
+.cornell-grid > .area-notes   { grid-area: notes; }
+.cornell-grid > .area-summary { grid-area: summary; }
+
+@media (max-width: 640px) {
+  .cornell-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas:
+      "title"
+      "cues"
+      "notes"
+      "summary";
+  }
+}
+
+/* Math (LaTeX-rendered) styles */
+.math {
+  font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', 'Latin Modern Math', serif;
+  font-size: 1.05em;
+  line-height: 1.6;
+  color: #1e293b;
+  word-spacing: 0.05em;
+}
+
+.math-frac {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  margin: 0 0.25em;
+  font-size: 0.95em;
+  line-height: 1.1;
+  text-align: center;
+}
+.math-frac > .math-num {
+  border-bottom: 1.5px solid currentColor;
+  padding: 0 0.25em 1px;
+  display: block;
+}
+.math-frac > .math-den {
+  padding: 1px 0.25em 0;
+  display: block;
+}
+
+.math-sqrt {
+  display: inline-block;
+  position: relative;
+  border-top: 1.5px solid currentColor;
+  padding: 2px 0.3em 0 0.5em;
+  margin-left: 0.4em;
+  vertical-align: middle;
+}
+.math-sqrt::before {
+  content: '√';
+  position: absolute;
+  left: -0.45em;
+  top: -0.35em;
+  font-size: 1.4em;
+  line-height: 1;
+  font-weight: 500;
+}
+.math-sqrt > .math-root {
+  position: absolute;
+  top: -0.5em;
+  left: -0.1em;
+  font-size: 0.65em;
+}
+.math-sqrt > .math-radicand {
+  display: inline-block;
+}
+
+.math-sup {
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+}
+.math-sub {
+  font-size: 0.72em;
+  vertical-align: sub;
+  line-height: 0;
+}

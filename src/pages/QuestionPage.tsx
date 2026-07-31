@@ -1,0 +1,252 @@
+import { useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { GRADE_LABELS, getSubject, STAGE_LABELS } from '../data/curriculum'
+import type { Grade, Stage } from '../types'
+import { loadAIConfig, makeSolver } from '../ai/solver'
+import { approxDataUrlSize, compressImage } from '../utils/image'
+import { formatAnswer } from '../utils/format'
+import ImageCropper from '../components/ImageCropper'
+
+const DRAFT_KEY = 'sqa:pending-solution'
+
+export default function QuestionPage() {
+  const { stage, grade, subject } = useParams()
+  const nav = useNavigate()
+  const s = stage as Stage
+  const g = parseInt(grade!, 10) as Grade
+  const sub = getSubject(s, g, subject!)!
+
+  const [text, setText] = useState('')
+  const [image, setImage] = useState<string | undefined>()
+  const [pendingCrop, setPendingCrop] = useState<string | undefined>()
+  const [solution, setSolution] = useState<string>('')
+  const [aiCues, setAiCues] = useState<string>('')
+  const [aiSummary, setAiSummary] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
+  const fileRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const [compressing, setCompressing] = useState(false)
+  const cameraRef = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLInputElement>(null)
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCompressing(true)
+    setError('')
+    try {
+      const dataUrl = await compressImage(file)
+      const kb = (approxDataUrlSize(dataUrl) / 1024).toFixed(0)
+      console.info(`[sqa] 圖片壓縮完成：${kb} KB`)
+      // 進入裁切畫面，使用者可在這裡框選要解題的範圍
+      setPendingCrop(dataUrl)
+    } catch (err: any) {
+      setError(`圖片處理失敗：${err?.message ?? err}`)
+    } finally {
+      setCompressing(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function onSolve() {
+    if (!text.trim() && !image) {
+      setError('請至少輸入文字題目或拍照')
+      return
+    }
+    setError('')
+    setLoading(true)
+    setSolution('')
+    abortRef.current?.abort()
+    abortRef.current = new AbortController()
+
+    try {
+      const cfg = loadAIConfig()
+      const solver = makeSolver(cfg)
+      const validation = solver.validateConfig()
+      if (validation) {
+        setError(`${validation}（請到「設定」填入）`)
+        setLoading(false)
+        return
+      }
+
+      const result = await solver.solve(
+        {
+          questionText: text,
+          questionImage: image,
+          subjectName: sub.name,
+          gradeLabel: `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}`,
+        },
+        abortRef.current.signal,
+      )
+      setSolution(result.solution)
+      setAiCues(result.cues ?? '')
+      setAiSummary(result.summary ?? '')
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return
+      setError(e?.message ?? '解題失敗，請檢查 API 設定或網路')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function onCancel() {
+    abortRef.current?.abort()
+    setLoading(false)
+  }
+
+  function onSaveNote() {
+    if (!solution) return
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+      stage: s, grade: g, subjectId: subject,
+      questionText: text, questionImage: image,
+      aiSolution: solution,
+      aiCues,
+      aiSummary,
+    }))
+    nav(`/stage/${s}/grade/${g}/subject/${subject}/note/new`)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-xl">
+          {sub.emoji}
+        </div>
+        <div>
+          <div className="font-semibold">{sub.name}</div>
+          <div className="text-xs text-slate-500">{STAGE_LABELS[s]}・{GRADE_LABELS[g]}</div>
+        </div>
+      </div>
+
+      <div className="card p-4 space-y-3">
+        <label className="label">📷 拍題目（選填）</label>
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={onFile}
+          className="hidden"
+        />
+        <input
+          ref={galleryRef}
+          type="file"
+          accept="image/*"
+          onChange={onFile}
+          className="hidden"
+        />
+        {pendingCrop ? (
+          <ImageCropper
+            image={pendingCrop}
+            onCancel={() => setPendingCrop(undefined)}
+            onUseOriginal={() => { setImage(pendingCrop); setPendingCrop(undefined) }}
+            onConfirm={(cropped) => { setImage(cropped); setPendingCrop(undefined) }}
+          />
+        ) : image ? (
+          <div className="space-y-2">
+            <div className="relative">
+              <img src={image} alt="題目" className="rounded-xl w-full max-h-80 object-contain bg-slate-100" />
+              <button
+                onClick={() => setImage(undefined)}
+                className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                aria-label="移除圖片"
+              >
+                ✕
+              </button>
+            </div>
+            <button
+              onClick={() => setPendingCrop(image)}
+              className="btn-secondary w-full text-sm"
+            >
+              ✂️ 重新框選
+            </button>
+          </div>
+        ) : compressing ? (
+          <div className="card p-4 text-center text-sm text-slate-500">
+            <span className="inline-block w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mr-2" />
+            處理圖片中…
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => cameraRef.current?.click()}
+                className="btn-secondary flex flex-col items-center gap-1 py-4"
+              >
+                <span className="text-2xl">📷</span>
+                <span className="text-sm font-medium">拍照</span>
+              </button>
+              <button
+                onClick={() => galleryRef.current?.click()}
+                className="btn-secondary flex flex-col items-center gap-1 py-4"
+              >
+                <span className="text-2xl">🖼️</span>
+                <span className="text-sm font-medium">從相簿選</span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 text-center">
+              💡 手機用「拍照」直接開相機；電腦或已有照片用「從相簿選」
+            </p>
+          </>
+        )}
+      </div>
+
+      <div className="card p-4 space-y-2">
+        <label className="label">✍️ 題目內容（可搭配圖片補充）</label>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          rows={5}
+          className="input resize-none"
+          placeholder="可以手打題目，或在圖片旁補充細節..."
+        />
+      </div>
+
+      {error && (
+        <div className="card p-3 border-rose-200 bg-rose-50 text-rose-700 text-sm">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {loading ? (
+        <button onClick={onCancel} className="btn-secondary w-full">取消</button>
+      ) : (
+        <button onClick={onSolve} className="btn-primary w-full">
+          🪄 AI 解題
+        </button>
+      )}
+
+      {loading && (
+        <div className="card p-6 text-center text-slate-500">
+          <div className="text-3xl animate-pulse">🧠</div>
+          <div className="mt-2 text-sm">AI 正在解題...</div>
+        </div>
+      )}
+
+      {solution && !loading && (
+        <>
+          <div className="card p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold">✨ AI 解答</div>
+              <button
+                onClick={() => navigator.clipboard?.writeText(formatAnswer(solution))}
+                className="btn-ghost text-xs"
+              >
+                📋 複製
+              </button>
+            </div>
+            <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap text-slate-800 leading-relaxed">
+              {formatAnswer(solution)}
+            </div>
+          </div>
+
+          <button onClick={onSaveNote} className="btn-primary w-full">
+            📝 整理成康乃爾錯題筆記
+          </button>
+        </>
+      )}
+    </div>
+  )
+}

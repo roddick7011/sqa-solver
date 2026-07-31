@@ -1,0 +1,28 @@
+{
+  "name": "解題小幫手 — 國高中康乃爾錯題本",
+  "short_name": "解題小幫手",
+  "description": "中學生拍照解題，搭配康乃爾筆記法整理錯題。",
+  "theme_color": "#6366f1",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
