@@ -16,7 +16,8 @@ export default function Layout() {
   const dueCount = filterDue(dueNotes).length
 
   // 首次進入、若有 profile 但還沒 ready（currentId 還沒同步好），等一下
-  const showSetup = !ready
+  // 只有「已登入」才引導建 profile（未登入讓使用者自己到設定填 URL/Key）
+  const showSetup = !ready && !!user
 
   return (
     <div className="min-h-full flex flex-col">
