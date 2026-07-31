@@ -87,7 +87,7 @@ export default function Layout() {
       </header>
 
       <main className="flex-1 max-w-screen-md w-full mx-auto px-4 py-4 pb-24">
-        {ready && <Outlet />}
+        {(ready || !user) && <Outlet />}
       </main>
 
       <footer className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-100">
