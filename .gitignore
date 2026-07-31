@@ -9,3 +9,4 @@ dist-old-*/
 .vite/
 .workbuddy/
 *.tsbuildinfo
+vite.config.ts.timestamp-*.mjs
