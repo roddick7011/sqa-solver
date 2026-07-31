@@ -186,24 +186,37 @@ export default function NotePage() {
       </div>
 
       {(questionText || questionImage) && (
-        <details className="card p-4">
-          <summary className="cursor-pointer font-semibold text-sm">📋 題目與 AI 解答（點擊展開）</summary>
-          <div className="mt-3 space-y-3">
-            {questionImage && <img src={questionImage} className="rounded-xl max-h-72 w-full object-contain bg-slate-100" />}
-            {questionText && (
-              <div className="text-sm whitespace-pre-wrap text-slate-700">
-                <div className="text-xs font-semibold text-slate-500 mb-1">題目</div>
-                {questionText}
-              </div>
-            )}
+        <>
+          {/* 題目：永遠展開（學生該看得到題目） */}
+          <div className="card p-4">
+            <div className="font-semibold text-sm mb-2">📋 題目</div>
+            <div className="space-y-3">
+              {questionImage && <img src={questionImage} className="rounded-xl max-h-72 w-full object-contain bg-slate-100" />}
+              {questionText && (
+                <div className="text-sm whitespace-pre-wrap text-slate-700">
+                  {questionText}
+                </div>
+              )}
+            </div>
             {aiSolution && (
-              <div className="text-sm whitespace-pre-wrap text-slate-700">
-                <div className="text-xs font-semibold text-slate-500 mb-1">AI 解答</div>
-                {formatAnswer(aiSolution)}
+              <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-amber-700">
+                💡 先自己想看看，真的想不出來再看 AI 解答 ↓
               </div>
             )}
           </div>
-        </details>
+
+          {/* AI 解答：預設折疊，需點擊才展開 */}
+          {aiSolution && (
+            <details className="card p-4">
+              <summary className="cursor-pointer font-semibold text-sm text-primary-700">
+                🤖 AI 解答（點擊展開）
+              </summary>
+              <div className="mt-3 text-sm whitespace-pre-wrap text-slate-700">
+                {formatAnswer(aiSolution)}
+              </div>
+            </details>
+          )}
+        </>
       )}
 
       <div className="card p-4">
