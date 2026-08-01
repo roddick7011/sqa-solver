@@ -32,7 +32,7 @@ export function getSupabase(): SupabaseClient | null {
   const cfg = loadSupabaseConfig()
   if (!cfg) return null
   if (_client) return _client
-  _client = createClient(cfg.url, cfg.anonKey, {
+  _client = createClient('/api/supabase', cfg.anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: false,  // 08-02 測試：關閉 background refresh（懷疑 Android 環境 fetch 定時器拋錯）
