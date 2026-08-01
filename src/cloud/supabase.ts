@@ -35,7 +35,7 @@ export function getSupabase(): SupabaseClient | null {
   _client = createClient(cfg.url, cfg.anonKey, {
     auth: {
       persistSession: true,
-      autoRefreshToken: true,
+      autoRefreshToken: false,  // 08-02 測試：關閉 background refresh（懷疑 Android 環境 fetch 定時器拋錯）
       detectSessionInUrl: false,
     },
   })

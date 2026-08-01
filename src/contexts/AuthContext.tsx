@@ -101,8 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const sb = getSupabase()
     if (!sb) return { error: '尚未連線 Supabase（請到設定頁填入 URL 和 Key）' }
-    const { error } = await sb.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await sb.auth.signInWithPassword({ email, password })
+      return { error: error?.message ?? null }
+    } catch (e: any) {
+      // 顯示完整錯誤（含 name + message），方便 Android 手機端 debug
+      const detail = e?.message ?? String(e)
+      const name = e?.name ?? 'Error'
+      return { error: `${name}: ${detail}` }
+    }
   }, [])
 
   const signUp = useCallback(async (email: string, password: string) => {
