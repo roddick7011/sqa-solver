@@ -32,7 +32,10 @@ export function getSupabase(): SupabaseClient | null {
   const cfg = loadSupabaseConfig()
   if (!cfg) return null
   if (_client) return _client
-  _client = createClient('/api/supabase', cfg.anonKey, {
+  // Android Chrome 對 cross-origin fetch 有特殊限制 → 走 Vercel proxy
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  const baseUrl = isAndroid ? '/api/supabase' : cfg.url
+  _client = createClient(baseUrl, cfg.anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: false,  // 08-02 測試：關閉 background refresh（懷疑 Android 環境 fetch 定時器拋錯）

@@ -44,7 +44,9 @@ export default function LoginPage() {
     if (cfg) {
       try {
         setError('🔍 測試連線中...')
-        const testRes = await fetch(`/api/supabase/auth/v1/health`, {
+        const isAndroid = /Android/i.test(navigator.userAgent)
+        const testUrl = isAndroid ? '/api/supabase/auth/v1/health' : `${cfg.url}/auth/v1/health`
+        const testRes = await fetch(testUrl, {
           method: 'GET',
           headers: { 'apikey': cfg.anonKey },
         })
