@@ -3,10 +3,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // 2026-08-02 暫時關閉 minify：懷疑 supabase-js 在 Android 執行失敗是 minify 改名造成的
+    minify: false,
+  },
   server: {
     host: true,
     port: 5173,
-    // 強制 dev 模式不 cache，避免手機瀏覽器拿到舊版 JS
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       'Pragma': 'no-cache',
