@@ -38,6 +38,24 @@ export default function LoginPage() {
     }
     setBusy(true)
     setError('')
+    
+    // 08-02 debug：先用純 fetch 打 Supabase health 確認 Android 是否能 fetch
+    const cfg = loadSupabaseConfig()
+    if (cfg) {
+      try {
+        setError('🔍 測試連線中...')
+        const testRes = await fetch(`${cfg.url}/auth/v1/health`, {
+          method: 'GET',
+          headers: { 'apikey': cfg.anonKey },
+        })
+        setError(`🔍 fetch OK (status=${testRes.status})，嘗試登入...`)
+      } catch (e: any) {
+        setError(`❌ 純 fetch 失敗：${e?.message ?? e}`)
+        setBusy(false)
+        return
+      }
+    }
+    
     const fn = mode === 'signin' ? signIn : signUp
     const { error } = await fn(email, password)
     setBusy(false)
