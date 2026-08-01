@@ -10,3 +10,4 @@ dist-old-*/
 .workbuddy/
 *.tsbuildinfo
 vite.config.ts.timestamp-*.mjs
+tmp-*.png

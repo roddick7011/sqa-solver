@@ -15,30 +15,12 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Service Worker 策略：
-      // - 正式環境（localhost 或 https）：註冊 SW 啟用離線快取
-      // - 帶 ?nosw=1 query：完全不註冊 SW（debug 用，手機有問題時可加）
-      // - dev 環境（用 IP 從手機訪問）：清掉所有舊 SW 和 cache，
-      //   避免 Vite HMR 改的程式碼被舊版卡住
-      const noSW = new URLSearchParams(location.search).get('nosw') === '1'
-      if ('serviceWorker' in navigator && !noSW) {
-        const isProd = ['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'https:'
-        if (isProd) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(() => {})
-          })
-        } else {
-          // dev：解除所有 SW + 清 cache，避免舊版干擾
-          navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(reg => reg.unregister())
-          })
-          if (window.caches) {
-            caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
-          }
-        }
-      } else if (noSW) {
-        // 帶 ?nosw=1：主動解除並清快取
-        navigator.serviceWorker?.getRegistrations().then(regs => {
+      // 2026-08-02 拿掉 Service Worker
+      // SW 會 cache 舊版 shell，導致手機永遠用舊版（Vercel 部署後看不到新功能）
+      // 解法：完全拿掉 SW，APP 純靠 IndexedDB 運作
+      // 登入後主動清掉舊 SW（給已經被 cache 的使用者一個升級路徑）
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
           regs.forEach(reg => reg.unregister())
         })
         if (window.caches) {
