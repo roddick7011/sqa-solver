@@ -17,9 +17,11 @@
     <script>
       // Service Worker 策略：
       // - 正式環境（localhost 或 https）：註冊 SW 啟用離線快取
+      // - 帶 ?nosw=1 query：完全不註冊 SW（debug 用，手機有問題時可加）
       // - dev 環境（用 IP 從手機訪問）：清掉所有舊 SW 和 cache，
       //   避免 Vite HMR 改的程式碼被舊版卡住
-      if ('serviceWorker' in navigator) {
+      const noSW = new URLSearchParams(location.search).get('nosw') === '1'
+      if ('serviceWorker' in navigator && !noSW) {
         const isProd = ['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'https:'
         if (isProd) {
           window.addEventListener('load', () => {
@@ -33,6 +35,14 @@
           if (window.caches) {
             caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
           }
+        }
+      } else if (noSW) {
+        // 帶 ?nosw=1：主動解除並清快取
+        navigator.serviceWorker?.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister())
+        })
+        if (window.caches) {
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
         }
       }
     </script>
