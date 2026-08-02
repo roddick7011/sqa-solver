@@ -2,13 +2,23 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { GRADE_LABELS, getSubject, STAGE_GRADES, STAGE_LABELS } from '../data/curriculum'
+import { GRADE_LABELS, getChapters, getSubject, STAGE_GRADES, STAGE_LABELS } from '../data/curriculum'
 import { formatNextReview } from '../utils/srs'
 import type { Grade, Stage } from '../types'
 import { useProfile } from '../contexts/ProfileContext'
 import { useAuth } from '../contexts/AuthContext'
 import { deleteCloudNote } from '../cloud/sync'
 import { notifySyncError } from '../utils/notify'
+
+// Fisher-Yates shuffle
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export default function NotebookPage() {
   const { current } = useProfile()
@@ -24,17 +34,22 @@ export default function NotebookPage() {
   const [filterStage, setFilterStage] = useState<Stage | 'all'>('all')
   const [filterGrade, setFilterGrade] = useState<Grade | 'all'>('all')
   const [filterSubject, setFilterSubject] = useState<string>('all')
+  const [filterChapter, setFilterChapter] = useState<string>('all')  // 🆕
   const [onlyStarred, setOnlyStarred] = useState(false)
+  const [randomOrder, setRandomOrder] = useState(false) // 🆕 隨機排列
 
   const filtered = useMemo(() => {
-    return notes.filter(n => {
+    let result = notes.filter(n => {
       if (filterStage !== 'all' && n.stage !== filterStage) return false
       if (filterGrade !== 'all' && n.grade !== filterGrade) return false
       if (filterSubject !== 'all' && n.subjectId !== filterSubject) return false
+      if (filterChapter !== 'all' && n.chapterId !== filterChapter) return false  // 🆕
       if (onlyStarred && !n.starred) return false
       return true
     })
-  }, [notes, filterStage, filterGrade, filterSubject, onlyStarred])
+    if (randomOrder) result = shuffle(result) // 🆕
+    return result
+  }, [notes, filterStage, filterGrade, filterSubject, filterChapter, onlyStarred, randomOrder])
 
   async function deleteNote(id: number) {
     if (!confirm('確定要刪除這筆錯題嗎？')) return
@@ -101,6 +116,35 @@ export default function NotebookPage() {
               })}
           </select>
         )}
+        {/* 🆕 章節篩選 */}
+        {filterSubject !== 'all' && filterGrade !== 'all' && (
+          <select
+            value={filterChapter}
+            onChange={e => setFilterChapter(e.target.value)}
+            className="input"
+          >
+            <option value="all">全部章節</option>
+            {Array.from(new Set(notes
+              .filter(n => n.stage === filterStage && n.grade === filterGrade && n.subjectId === filterSubject)
+              .map(n => n.chapterId)
+              .filter(Boolean)))
+              .map(cid => {
+                const chapters = getChapters(filterGrade as Grade, filterSubject)
+                const ch = chapters.find(c => c.id === cid)
+                return ch ? <option key={cid} value={cid}>{ch.name}</option> : null
+              })
+            }
+          </select>
+        )}
+        {/* 🆕 隨機排列 */}
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={randomOrder}
+            onChange={e => setRandomOrder(e.target.checked)}
+          />
+          🔀 隨機順序
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

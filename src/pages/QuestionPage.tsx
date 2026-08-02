@@ -10,11 +10,15 @@ import ImageCropper from '../components/ImageCropper'
 const DRAFT_KEY = 'sqa:pending-solution'
 
 export default function QuestionPage() {
-  const { stage, grade, subject } = useParams()
+  const { stage, grade, subjectId } = useParams()
   const nav = useNavigate()
   const s = stage as Stage
   const g = parseInt(grade!, 10) as Grade
-  const sub = getSubject(s, g, subject!)!
+  const sub = getSubject(s, g, subjectId!)!
+  // 章節（從 query string 讀取）
+  const qs = new URLSearchParams(window.location.search)
+  const chapterId = qs.get('chapterId') ?? undefined
+  const chapterName = qs.get('chapterName') ?? undefined
 
   const [text, setText] = useState('')
   const [image, setImage] = useState<string | undefined>()
@@ -99,13 +103,14 @@ export default function QuestionPage() {
   function onSaveNote() {
     if (!solution) return
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
-      stage: s, grade: g, subjectId: subject,
+      stage: s, grade: g, subjectId: sub.id,
+      chapterId,
       questionText: text, questionImage: image,
       aiSolution: solution,
       aiCues,
       aiSummary,
     }))
-    nav(`/stage/${s}/grade/${g}/subject/${subject}/note/new`)
+    nav(`/stage/${s}/grade/${g}/subject/${sub.id}/note/new`)
   }
 
   return (

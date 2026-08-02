@@ -35,7 +35,7 @@ export default function SubjectPage() {
         {subjects.map(sub => (
           <Link
             key={sub.id}
-            to={`/stage/${s}/grade/${g}/subject/${sub.id}/ask`}
+            to={`/stage/${s}/grade/${g}/subject/${sub.id}/chapter`}
             className="card aspect-square flex flex-col items-center justify-center p-2 active:scale-95 transition-transform"
           >
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${COLOR_BG[sub.color] ?? 'bg-slate-100'}`}>

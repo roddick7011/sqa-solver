@@ -23,6 +23,7 @@ interface CloudNote {
   stage: string
   grade: number
   subject_id: string
+  chapter_id?: string | null  // 🆕
   question_text: string
   question_image: string | null
   ai_solution: string
@@ -72,6 +73,7 @@ export function noteToCloud(n: WrongNote, userId: string): Omit<CloudNote, 'user
     stage: n.stage,
     grade: n.grade,
     subject_id: n.subjectId,
+    chapter_id: n.chapterId ?? null,  // 🆕
     question_text: n.questionText,
     question_image: n.questionImage ?? null,
     ai_solution: n.aiSolution,
@@ -99,6 +101,7 @@ export function noteFromCloud(c: CloudNote): WrongNote {
     stage: c.stage as WrongNote['stage'],
     grade: c.grade as WrongNote['grade'],
     subjectId: c.subject_id,
+    chapterId: c.chapter_id ?? undefined, // 🆕
     questionText: c.question_text,
     questionImage: c.question_image ?? undefined,
     aiSolution: c.ai_solution,

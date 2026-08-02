@@ -9,6 +9,14 @@ export interface Subject {
   color: string  // tailwind class fragment, e.g. "rose"
 }
 
+// 108 課綱章節
+export interface Chapter {
+  id: string       // e.g. "math-1"
+  name: string     // e.g. "數與量"
+  grade: Grade     // 所屬年級
+  subjectId: string
+}
+
 // 小孩 / 使用者 profile（一台裝置可有多個，例如家裡兩個小孩）
 export interface Profile {
   id: string              // uuid
@@ -30,6 +38,7 @@ export interface WrongNote {
   stage: Stage
   grade: Grade
   subjectId: string
+  chapterId?: string       // 🆕 章節（可選，因為舊資料沒有）
 
   // 題目
   questionText: string

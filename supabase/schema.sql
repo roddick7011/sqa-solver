@@ -28,6 +28,7 @@ create table if not exists public.notes (
   stage text not null,
   grade int not null,
   subject_id text not null,
+  chapter_id text,  -- 🆕 章節（可選）
 
   -- 題目
   question_text text not null default '',

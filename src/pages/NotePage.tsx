@@ -16,13 +16,13 @@ import CornellEditor from '../components/CornellEditor'
 const DRAFT_KEY = 'sqa:pending-solution'
 
 export default function NotePage() {
-  const { stage, grade, subject, id } = useParams()
+  const { stage, grade, subjectId, id } = useParams()
   const nav = useNavigate()
   const { current } = useProfile()
   const { user } = useAuth()
   const s = stage as Stage
   const g = parseInt(grade!, 10) as Grade
-  const sub = getSubject(s, g, subject!)!
+  const sub = getSubject(s, g, subjectId!)!
 
   const [cues, setCues] = useState('')
   const [notes, setNotes] = useState('')
@@ -36,6 +36,7 @@ export default function NotePage() {
   const [editingId, setEditingId] = useState<number | undefined>(undefined)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState('')
+  const [chapterId, setChapterId] = useState<string | undefined>() // 🆕 章節
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -62,10 +63,10 @@ export default function NotePage() {
           setQuestionText(d.questionText || '')
           setQuestionImage(d.questionImage)
           setAiSolution(d.aiSolution || '')
-          // 預設 notes 帶入 AI 解答，cues/summary 用 AI 預填的（如果有的話）
           setNotes(d.aiSolution || '')
           setCues(d.aiCues || '')
           setSummary(d.aiSummary || '')
+          setChapterId(d.chapterId)  // 🆕 章節
         } catch {}
       }
     }
@@ -116,7 +117,8 @@ export default function NotePage() {
       profileId: current.id,
       stage: s,
       grade: g,
-      subjectId: subject!,
+      subjectId: subjectId!,
+      chapterId,  // 🆕 章節
       questionText,
       questionImage,
       aiSolution,

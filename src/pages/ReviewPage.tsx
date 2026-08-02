@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { db } from '../db/db'
-import { GRADE_LABELS, getSubject, STAGE_LABELS } from '../data/curriculum'
-import type { WrongNote } from '../types'
+import { GRADE_LABELS, getChapters, getSubject, STAGE_GRADES, STAGE_LABELS } from '../data/curriculum'
+import type { Grade, Stage, WrongNote } from '../types'
 import { applyReview, filterDue, formatNextReview } from '../utils/srs'
 import { formatAnswer } from '../utils/format'
 import { saveAutoSnapshot } from '../utils/backup'
@@ -12,6 +12,16 @@ import { useProfile } from '../contexts/ProfileContext'
 import { useAuth } from '../contexts/AuthContext'
 import { pushNote } from '../cloud/sync'
 import { notifySyncError } from '../utils/notify'
+
+// Fisher-Yates shuffle
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export default function ReviewPage() {
   const { current: activeProfile } = useProfile()
@@ -32,16 +42,39 @@ export default function ReviewPage() {
   const [queue, setQueue] = useState<WrongNote[]>([])
   const [ready, setReady] = useState(false)
 
-  // 進入頁面時，把 due 順序排好（先到期的優先；同到期則較舊的優先）
+  // 🆕 章節篩選
+  const [filterStage, setFilterStage] = useState<Stage | 'all'>('all')
+  const [filterGrade, setFilterGrade] = useState<Grade | 'all'>('all')
+  const [filterSubject, setFilterSubject] = useState<string>('all')
+  const [filterChapter, setFilterChapter] = useState<string>('all')
+  const [randomOrder, setRandomOrder] = useState(true) // 🆕 預設隨機排列
+
+  // 進入頁面時（或篩選變更時），把 due 順序排好
   useEffect(() => {
-    if (queue.length === 0 && dueNotes.length > 0) {
-      const sorted = [...dueNotes].sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0))
-      setQueue(sorted)
+    let filtered = dueNotes.filter(n => {
+      if (filterStage !== 'all' && n.stage !== filterStage) return false
+      if (filterGrade !== 'all' && n.grade !== filterGrade) return false
+      if (filterSubject !== 'all' && n.subjectId !== filterSubject) return false
+      if (filterChapter !== 'all' && n.chapterId !== filterChapter) return false
+      return true
+    })
+    const sorted = randomOrder
+      ? shuffle(filtered)
+      : [...filtered].sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0))
+    setQueue(sorted)
+    setIndex(0)
+    setDone(false)
+    setStats({ correct: 0, wrong: 0 })
+  }, [dueNotes, filterStage, filterGrade, filterSubject, filterChapter, randomOrder])
+
+  // 首次 dueNotes 就緒
+  useEffect(() => {
+    if (!ready && dueNotes.length > 0) {
       setReady(true)
     } else if (dueNotes.length === 0) {
       setReady(true)
     }
-  }, [dueNotes, queue.length])
+  }, [dueNotes, ready])
 
   const current = queue[index]
 
@@ -99,6 +132,27 @@ export default function ReviewPage() {
     return (
       <div className="space-y-4">
         <h2 className="text-lg font-bold">📚 今日複習</h2>
+        {/* 🆕 即使沒題目也顯示篩選器，讓使用者可以切換範圍 */}
+        <details className="card p-3 text-sm">
+          <summary className="cursor-pointer font-medium text-slate-600">🔍 篩選範圍（預設全部）</summary>
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+                <option value="all">全部學制</option>
+                <option value="junior">國中</option>
+                <option value="senior">高中</option>
+              </select>
+              {filterStage !== 'all' && (
+                <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+                  <option value="all">全部年級</option>
+                  {STAGE_GRADES[filterStage].map(g => (
+                    <option key={g} value={g}>{GRADE_LABELS[g]}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        </details>
         <div className="card p-8 text-center text-slate-500">
           <div className="text-5xl mb-3">🎉</div>
           <div className="font-semibold mb-1">今天沒有要複習的錯題！</div>
@@ -137,6 +191,57 @@ export default function ReviewPage() {
 
   return (
     <div className="space-y-4">
+      {/* 🆕 章節篩選工具列 */}
+      <details className="card p-3 text-sm">
+        <summary className="cursor-pointer font-medium text-slate-600">🔍 篩選範圍（預設全部）</summary>
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+              <option value="all">全部學制</option>
+              <option value="junior">國中</option>
+              <option value="senior">高中</option>
+            </select>
+            {filterStage !== 'all' && (
+              <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+                <option value="all">全部年級</option>
+                {STAGE_GRADES[filterStage].map(g => (
+                  <option key={g} value={g}>{GRADE_LABELS[g]}</option>
+                ))}
+              </select>
+            )}
+            {filterGrade !== 'all' && (
+              <select value={filterSubject} onChange={e => { setFilterSubject(e.target.value); setFilterChapter('all') }} className="input text-xs py-1">
+                <option value="all">全部科目</option>
+                {Array.from(new Set(dueNotes.filter(n => n.stage === filterStage && n.grade === filterGrade).map(n => n.subjectId)))
+                  .map(sid => {
+                    const s = getSubject(filterStage as Stage, filterGrade as Grade, sid)
+                    return s ? <option key={sid} value={sid}>{s.emoji} {s.name}</option> : null
+                  })}
+              </select>
+            )}
+            {filterSubject !== 'all' && (
+              <select value={filterChapter} onChange={e => setFilterChapter(e.target.value)} className="input text-xs py-1">
+                <option value="all">全部章節</option>
+                {Array.from(new Set(dueNotes
+                  .filter(n => n.stage === filterStage && n.grade === filterGrade && n.subjectId === filterSubject)
+                  .map(n => n.chapterId).filter(Boolean)))
+                  .map(cid => {
+                    const chapters = getChapters(filterGrade as Grade, filterSubject)
+                    const ch = chapters.find(c => c.id === cid)
+                    return ch ? <option key={cid} value={cid}>{ch.name}</option> : null
+                  })
+                }
+              </select>
+            )}
+            <label className="flex items-center gap-1 text-xs">
+              <input type="checkbox" checked={randomOrder} onChange={e => setRandomOrder(e.target.checked)} />
+              🔀 隨機
+            </label>
+          </div>
+          {queue.length > 0 && <div className="text-xs text-slate-400">目前顯示 {queue.length} 題</div>}
+        </div>
+      </details>
+
       {/* 進度條 */}
       <div className="flex items-center justify-between text-sm">
         <div className="font-semibold">📚 複習模式</div>
