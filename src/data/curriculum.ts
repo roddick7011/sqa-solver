@@ -21,18 +21,27 @@ export const STAGE_GRADES: Record<Stage, Grade[]> = {
   senior: [10, 11, 12],
 }
 
-// 國中（108 課綱）
-const JUNIOR_SUBJECTS: Subject[] = [
-  { id: 'chi',  name: '國文',       emoji: '📖', color: 'rose'    },
-  { id: 'eng',  name: '英文',       emoji: '🔤', color: 'sky'     },
-  { id: 'math', name: '數學',       emoji: '➗', color: 'indigo'  },
-  { id: 'sci',  name: '自然科學',   emoji: '🔬', color: 'emerald' },
-  { id: 'soc',  name: '社會',       emoji: '🌍', color: 'amber'   },
-  { id: 'art',  name: '藝術',       emoji: '🎨', color: 'pink'    },
-  { id: 'tech', name: '科技',       emoji: '💻', color: 'cyan'    },
-  { id: 'pe',   name: '健康與體育', emoji: '🏃', color: 'lime'    },
-  { id: 'comp', name: '綜合活動',   emoji: '🌱', color: 'teal'    },
-]
+// 國中（108 課綱 翰林版）— 按年級拆分科目
+// 七上/下：國文、數學、公民、歷史、地理、生物
+// 八上/下：國文、數學、公民、歷史、地理、理化
+// 九上/下：國文、數學、公民、歷史、地理、理化、地科
+
+const JL_CHI: Subject = { id: 'chi',  name: '國文',     emoji: '📖', color: 'rose'    }
+const JL_MATH: Subject = { id: 'math', name: '數學',     emoji: '➗', color: 'indigo'  }
+const JL_CIV: Subject = { id: 'civ',  name: '公民',     emoji: '⚖️', color: 'yellow'  }
+const JL_HIST: Subject = { id: 'hist', name: '歷史',     emoji: '📜', color: 'amber'   }
+const JL_GEO: Subject = { id: 'geo',  name: '地理',     emoji: '🗺️', color: 'orange'  }
+const JL_BIO: Subject = { id: 'bio',  name: '生物',     emoji: '🧬', color: 'emerald' }
+const JL_PHYS: Subject = { id: 'phys', name: '理化',     emoji: '⚗️', color: 'violet'  }
+const JL_EARTH: Subject = { id: 'earth', name: '地科',    emoji: '🌐', color: 'cyan'    }
+const JL_ART: Subject = { id: 'art',  name: '藝術',     emoji: '🎨', color: 'pink'    }
+const JL_TECH: Subject = { id: 'tech', name: '科技',     emoji: '💻', color: 'blue'    }
+const JL_PE: Subject = { id: 'pe',   name: '健康與體育', emoji: '🏃', color: 'lime'    }
+const JL_COMP: Subject = { id: 'comp', name: '綜合活動', emoji: '🌱', color: 'teal'    }
+
+const JUNIOR_GRADE_7: Subject[] = [JL_CHI, JL_MATH, JL_CIV, JL_HIST, JL_GEO, JL_BIO]
+const JUNIOR_GRADE_8: Subject[] = [JL_CHI, JL_MATH, JL_CIV, JL_HIST, JL_GEO, JL_PHYS]
+const JUNIOR_GRADE_9: Subject[] = [JL_CHI, JL_MATH, JL_CIV, JL_HIST, JL_GEO, JL_PHYS, JL_EARTH]
 
 // 高中（108 課綱）— 高一共同科目 + 高二三選修分流
 const SENIOR_COMMON: Subject[] = [
@@ -59,9 +68,9 @@ const SENIOR_ADVANCED: Subject[] = [
 ]
 
 const SUBJECTS_BY_GRADE: Record<Grade, Subject[]> = {
-  7: JUNIOR_SUBJECTS,
-  8: JUNIOR_SUBJECTS,
-  9: JUNIOR_SUBJECTS,
+  7: JUNIOR_GRADE_7,
+  8: JUNIOR_GRADE_8,
+  9: JUNIOR_GRADE_9,
   10: SENIOR_COMMON,
   11: SENIOR_COMMON,
   12: [...SENIOR_COMMON, ...SENIOR_ADVANCED],
@@ -201,30 +210,157 @@ const HL_CHAPTERS: Chapter[] = [
   { id: 'eng-9a-1', name: 'Unit 1-3：現在完成式',        grade: 9, subjectId: 'eng' },
   { id: 'eng-9b-1', name: 'Unit 4-6：關係子句',          grade: 9, subjectId: 'eng' },
 
-  // ═══ 自然科學 ═══
-  { id: 'sci-7a-1', name: '生物：生命世界',              grade: 7, subjectId: 'sci' },
-  { id: 'sci-7a-2', name: '生物：細胞與個體',            grade: 7, subjectId: 'sci' },
-  { id: 'sci-7b-1', name: '生物：遺傳與演化',            grade: 7, subjectId: 'sci' },
-  { id: 'sci-8a-1', name: '理化：基本測量與物質',        grade: 8, subjectId: 'sci' },
-  { id: 'sci-8a-2', name: '理化：波動與聲音',            grade: 8, subjectId: 'sci' },
-  { id: 'sci-8b-1', name: '理化：化學反應',              grade: 8, subjectId: 'sci' },
-  { id: 'sci-8b-2', name: '理化：力與壓力',              grade: 8, subjectId: 'sci' },
-  { id: 'sci-9a-1', name: '理化：直線運動',              grade: 9, subjectId: 'sci' },
-  { id: 'sci-9a-2', name: '理化：力與運動',              grade: 9, subjectId: 'sci' },
-  { id: 'sci-9a-3', name: '理化：電與磁',                grade: 9, subjectId: 'sci' },
-  { id: 'sci-9b-1', name: '地科：天文與宇宙',            grade: 9, subjectId: 'sci' },
-  { id: 'sci-9b-2', name: '地科：大氣與氣候',            grade: 9, subjectId: 'sci' },
+  // ═══ 公民 ═══（翰林版真實章節）
+  // 七上公民
+  { id: 'civ-7a-1', name: '公民與公民德性', grade: 7, subjectId: 'civ' },
+  { id: 'civ-7a-2', name: '權利與校園生活', grade: 7, subjectId: 'civ' },
+  { id: 'civ-7a-3', name: '家庭生活',         grade: 7, subjectId: 'civ' },
+  { id: 'civ-7a-4', name: '平權家庭',         grade: 7, subjectId: 'civ' },
+  { id: 'civ-7a-5', name: '原住民族部落與公民參與', grade: 7, subjectId: 'civ' },
+  { id: 'civ-7a-6', name: '人性尊嚴與普世人權', grade: 7, subjectId: 'civ' },
+  // 七下公民
+  { id: 'civ-7b-1', name: '社會中的多元文化', grade: 7, subjectId: 'civ' },
+  { id: 'civ-7b-2', name: '社會規範',           grade: 7, subjectId: 'civ' },
+  { id: 'civ-7b-3', name: '團體與志願結社',     grade: 7, subjectId: 'civ' },
+  { id: 'civ-7b-4', name: '民主社會中的公共意見', grade: 7, subjectId: 'civ' },
+  { id: 'civ-7b-5', name: '社會中的公平正義',   grade: 7, subjectId: 'civ' },
+  { id: 'civ-7b-6', name: '社會安全與國家責任', grade: 7, subjectId: 'civ' },
+  // 八上公民
+  { id: 'civ-8a-1', name: '現代國家與民主政治', grade: 8, subjectId: 'civ' },
+  { id: 'civ-8a-2', name: '中央政府',             grade: 8, subjectId: 'civ' },
+  { id: 'civ-8a-3', name: '地方政府',             grade: 8, subjectId: 'civ' },
+  { id: 'civ-8a-4', name: '政府的經濟功能',       grade: 8, subjectId: 'civ' },
+  { id: 'civ-8a-5', name: '政黨與利益團體',       grade: 8, subjectId: 'civ' },
+  { id: 'civ-8a-6', name: '政治參與和選舉',       grade: 8, subjectId: 'civ' },
+  // 八下公民
+  { id: 'civ-8b-1', name: '法律的基本概念',     grade: 8, subjectId: 'civ' },
+  { id: 'civ-8b-2', name: '生產與利潤',         grade: 8, subjectId: 'civ' },
+  { id: 'civ-8b-3', name: '民法與生活',         grade: 8, subjectId: 'civ' },
+  { id: 'civ-8b-4', name: '刑法與行政法規',     grade: 8, subjectId: 'civ' },
+  { id: 'civ-8b-5', name: '權利救濟',           grade: 8, subjectId: 'civ' },
+  { id: 'civ-8b-6', name: '少年的法律常識',     grade: 8, subjectId: 'civ' },
+  // 九上公民
+  { id: 'civ-9a-1', name: '選擇與消費',         grade: 9, subjectId: 'civ' },
+  { id: 'civ-9a-2', name: '生產與利潤',         grade: 9, subjectId: 'civ' },
+  { id: 'civ-9a-3', name: '市場與貨幣',         grade: 9, subjectId: 'civ' },
+  { id: 'civ-9a-4', name: '分工與貿易',         grade: 9, subjectId: 'civ' },
+  { id: 'civ-9a-5', name: '個人與家庭經濟',     grade: 9, subjectId: 'civ' },
+  { id: 'civ-9a-6', name: '企業責任與綠色經濟', grade: 9, subjectId: 'civ' },
+  // 九下公民
+  { id: 'civ-9b-1', name: '全球化下的多元文化', grade: 9, subjectId: 'civ' },
+  { id: 'civ-9b-2', name: '科技發展',             grade: 9, subjectId: 'civ' },
+  { id: 'civ-9b-3', name: '國際社會中的互動',     grade: 9, subjectId: 'civ' },
+  { id: 'civ-9b-4', name: '建立和諧的世界',       grade: 9, subjectId: 'civ' },
 
-  // ═══ 社會 ═══（翰林版歷史/地理/公民��
-  { id: 'soc-7a-1', name: '歷史：台灣史（史前-清領）',  grade: 7, subjectId: 'soc' },
-  { id: 'soc-7a-2', name: '地理：台灣地理（自然環境）',  grade: 7, subjectId: 'soc' },
-  { id: 'soc-7b-1', name: '公民：個人與社會',            grade: 7, subjectId: 'soc' },
-  { id: 'soc-8a-1', name: '歷史：中國史（先秦-宋元）',  grade: 8, subjectId: 'soc' },
-  { id: 'soc-8a-2', name: '地理：中國地理',              grade: 8, subjectId: 'soc' },
-  { id: 'soc-8b-1', name: '公民：權利與義務',            grade: 8, subjectId: 'soc' },
-  { id: 'soc-9a-1', name: '歷史：世界史（近代-現代）',  grade: 9, subjectId: 'soc' },
-  { id: 'soc-9a-2', name: '地理：世界地理',              grade: 9, subjectId: 'soc' },
-  { id: 'soc-9b-1', name: '公民：民主與法治',            grade: 9, subjectId: 'soc' },
+  // ═══ 歷史 ═══（翰林版真實章節）
+  // 七上歷史
+  { id: 'hist-7a-1', name: '史前臺灣與原住民文化', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7a-2', name: '大航海時代各方勢力的競逐', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7a-3', name: '大航海時代臺灣原住民與外來者', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7a-4', name: '清帝國統治政策的變遷', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7a-5', name: '清帝國時期農商業的發展', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7a-6', name: '清帝國時期社會文化的變遷', grade: 7, subjectId: 'hist' },
+  // 七下歷史
+  { id: 'hist-7b-1', name: '日治時期的政治',     grade: 7, subjectId: 'hist' },
+  { id: 'hist-7b-2', name: '日治時期的經濟',     grade: 7, subjectId: 'hist' },
+  { id: 'hist-7b-3', name: '日治時期的社會與文化', grade: 7, subjectId: 'hist' },
+  { id: 'hist-7b-4', name: '戰後臺灣的政治',     grade: 7, subjectId: 'hist' },
+  { id: 'hist-7b-5', name: '戰後臺灣的外交',     grade: 7, subjectId: 'hist' },
+  { id: 'hist-7b-6', name: '戰後臺灣的經濟與社會', grade: 7, subjectId: 'hist' },
+  // 八上歷史
+  { id: 'hist-8a-1', name: '商周至隋唐時期的國家與社會', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8a-2', name: '商周至隋唐時期的民族與文化', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8a-3', name: '宋元多民族並立的時期', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8a-4', name: '明清時期東亞世界的變動', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8a-5', name: '西力衝擊下的東亞世界', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8a-6', name: '晚清社會文化的調適與變遷', grade: 8, subjectId: 'hist' },
+  // 八下歷史
+  { id: 'hist-8b-1', name: '晚清的變局',         grade: 8, subjectId: 'hist' },
+  { id: 'hist-8b-2', name: '清末的改革',         grade: 8, subjectId: 'hist' },
+  { id: 'hist-8b-3', name: '清朝的覆亡',         grade: 8, subjectId: 'hist' },
+  { id: 'hist-8b-4', name: '民初政局與社會變遷', grade: 8, subjectId: 'hist' },
+  { id: 'hist-8b-5', name: '國民政府的統治',     grade: 8, subjectId: 'hist' },
+  { id: 'hist-8b-6', name: '中華人民共和國的建立與發展', grade: 8, subjectId: 'hist' },
+  // 九上歷史
+  { id: 'hist-9a-1', name: '古文明的誕生',       grade: 9, subjectId: 'hist' },
+  { id: 'hist-9a-2', name: '希臘與羅馬文化',     grade: 9, subjectId: 'hist' },
+  { id: 'hist-9a-3', name: '中世紀的歐洲及伊斯蘭世界', grade: 9, subjectId: 'hist' },
+  { id: 'hist-9a-4', name: '近代歐洲的興起',     grade: 9, subjectId: 'hist' },
+  { id: 'hist-9a-5', name: '近代歐洲的變革',     grade: 9, subjectId: 'hist' },
+  { id: 'hist-9a-6', name: '近代民主政治的發展', grade: 9, subjectId: 'hist' },
+  // 九下歷史
+  { id: 'hist-9b-1', name: '十九世紀的民族主義與文化發展', grade: 9, subjectId: 'hist' },
+  { id: 'hist-9b-2', name: '新帝國主義與第一次世界大戰', grade: 9, subjectId: 'hist' },
+  { id: 'hist-9b-3', name: '戰間期與第二次世界大戰', grade: 9, subjectId: 'hist' },
+  { id: 'hist-9b-4', name: '第二次世界大戰後的局勢', grade: 9, subjectId: 'hist' },
+
+  // ═══ 地理 ═══（翰林版真實章節）
+  // 七上地理
+  { id: 'geo-7a-1', name: '認識位置與地圖',     grade: 7, subjectId: 'geo' },
+  { id: 'geo-7a-2', name: '世界中的臺灣',       grade: 7, subjectId: 'geo' },
+  { id: 'geo-7a-3', name: '地形',               grade: 7, subjectId: 'geo' },
+  { id: 'geo-7a-4', name: '海岸與島嶼',         grade: 7, subjectId: 'geo' },
+  { id: 'geo-7a-5', name: '天氣與氣候',         grade: 7, subjectId: 'geo' },
+  { id: 'geo-7a-6', name: '水文',               grade: 7, subjectId: 'geo' },
+  // 七下地理
+  { id: 'geo-7b-1', name: '人口',               grade: 7, subjectId: 'geo' },
+  { id: 'geo-7b-2', name: '族群與文化',         grade: 7, subjectId: 'geo' },
+  { id: 'geo-7b-3', name: '農業',               grade: 7, subjectId: 'geo' },
+  { id: 'geo-7b-4', name: '工業與國際貿易',     grade: 7, subjectId: 'geo' },
+  { id: 'geo-7b-5', name: '聚落體系與都市發展', grade: 7, subjectId: 'geo' },
+  { id: 'geo-7b-6', name: '區域發展與差異',     grade: 7, subjectId: 'geo' },
+  // 八上地理
+  { id: 'geo-8a-1', name: '疆域與區域畫分',     grade: 8, subjectId: 'geo' },
+  { id: 'geo-8a-2', name: '地形',               grade: 8, subjectId: 'geo' },
+  { id: 'geo-8a-3', name: '氣候與水文',         grade: 8, subjectId: 'geo' },
+  { id: 'geo-8a-4', name: '人口分布與人口問題', grade: 8, subjectId: 'geo' },
+  { id: 'geo-8a-5', name: '產業與經濟',         grade: 8, subjectId: 'geo' },
+  { id: 'geo-8a-6', name: '資源問題與環境保育', grade: 8, subjectId: 'geo' },
+  // 八下地理
+  { id: 'geo-8b-1', name: '南部地區',           grade: 8, subjectId: 'geo' },
+  { id: 'geo-8b-2', name: '北部地區',           grade: 8, subjectId: 'geo' },
+  { id: 'geo-8b-3', name: '西部地區',           grade: 8, subjectId: 'geo' },
+  { id: 'geo-8b-4', name: '世界概說',           grade: 8, subjectId: 'geo' },
+  { id: 'geo-8b-5', name: '東北亞',             grade: 8, subjectId: 'geo' },
+  { id: 'geo-8b-6', name: '東南亞與南亞',       grade: 8, subjectId: 'geo' },
+  // 九上地理
+  { id: 'geo-9a-1', name: '西亞與中亞',         grade: 9, subjectId: 'geo' },
+  { id: 'geo-9a-2', name: '歐洲概說與南歐',     grade: 9, subjectId: 'geo' },
+  { id: 'geo-9a-3', name: '西歐與北歐',         grade: 9, subjectId: 'geo' },
+  { id: 'geo-9a-4', name: '東歐與俄羅斯',       grade: 9, subjectId: 'geo' },
+  { id: 'geo-9a-5', name: '北美洲',             grade: 9, subjectId: 'geo' },
+  { id: 'geo-9a-6', name: '中南美洲',           grade: 9, subjectId: 'geo' },
+  // 九下地理
+  { id: 'geo-9b-1', name: '非洲',               grade: 9, subjectId: 'geo' },
+  { id: 'geo-9b-2', name: '大洋洲與兩極地區',   grade: 9, subjectId: 'geo' },
+  { id: 'geo-9b-3', name: '全球經濟議題',       grade: 9, subjectId: 'geo' },
+  { id: 'geo-9b-4', name: '全球環境議題',       grade: 9, subjectId: 'geo' },
+
+  // ═══ 生物（七年級專屬）═══（翰林版真實章節）
+  { id: 'bio-7a-1', name: '生命世界與科學方法', grade: 7, subjectId: 'bio' },
+  { id: 'bio-7a-2', name: '生物體的組成',       grade: 7, subjectId: 'bio' },
+  { id: 'bio-7a-3', name: '生物體的營養',       grade: 7, subjectId: 'bio' },
+  { id: 'bio-7a-4', name: '生物體的運輸作用',   grade: 7, subjectId: 'bio' },
+  { id: 'bio-7a-5', name: '生物體的協調作用',   grade: 7, subjectId: 'bio' },
+  { id: 'bio-7a-6', name: '生物體的恆定',       grade: 7, subjectId: 'bio' },
+
+  // ═══ 理化（八-九年級）═══（簡化版，待後續補真實章節）
+  { id: 'phys-8a-1', name: '物質的變化與性質',   grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-2', name: '波動與聲音',         grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-3', name: '光與反射',           grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-1', name: '化學反應',           grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-2', name: '力與壓力',           grade: 8, subjectId: 'phys' },
+  { id: 'phys-9a-1', name: '直線運動',           grade: 9, subjectId: 'phys' },
+  { id: 'phys-9a-2', name: '力與運動',           grade: 9, subjectId: 'phys' },
+  { id: 'phys-9a-3', name: '電與磁',             grade: 9, subjectId: 'phys' },
+  { id: 'phys-9b-1', name: '化學反應',           grade: 9, subjectId: 'phys' },
+  { id: 'phys-9b-2', name: '有機化合物',         grade: 9, subjectId: 'phys' },
+
+  // ═══ 地科（九年級專屬）═══（簡化版）
+  { id: 'earth-9a-1', name: '地球與宇宙',         grade: 9, subjectId: 'earth' },
+  { id: 'earth-9a-2', name: '大氣與海洋',         grade: 9, subjectId: 'earth' },
+  { id: 'earth-9b-1', name: '氣象與災害',         grade: 9, subjectId: 'earth' },
+  { id: 'earth-9b-2', name: '地質與環境',         grade: 9, subjectId: 'earth' },
 ]
 
 // 章節查詢
