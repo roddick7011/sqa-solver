@@ -344,23 +344,38 @@ const HL_CHAPTERS: Chapter[] = [
   { id: 'bio-7a-5', name: '生物體的協調作用',   grade: 7, subjectId: 'bio' },
   { id: 'bio-7a-6', name: '生物體的恆定',       grade: 7, subjectId: 'bio' },
 
-  // ═══ 理化（八-九年級）═══（簡化版，待後續補真實章節）
-  { id: 'phys-8a-1', name: '物質的變化與性質',   grade: 8, subjectId: 'phys' },
-  { id: 'phys-8a-2', name: '波動與聲音',         grade: 8, subjectId: 'phys' },
-  { id: 'phys-8a-3', name: '光與反射',           grade: 8, subjectId: 'phys' },
-  { id: 'phys-8b-1', name: '化學反應',           grade: 8, subjectId: 'phys' },
-  { id: 'phys-8b-2', name: '力與壓力',           grade: 8, subjectId: 'phys' },
-  { id: 'phys-9a-1', name: '直線運動',           grade: 9, subjectId: 'phys' },
-  { id: 'phys-9a-2', name: '力與運動',           grade: 9, subjectId: 'phys' },
-  { id: 'phys-9a-3', name: '電與磁',             grade: 9, subjectId: 'phys' },
-  { id: 'phys-9b-1', name: '化學反應',           grade: 9, subjectId: 'phys' },
-  { id: 'phys-9b-2', name: '有機化合物',         grade: 9, subjectId: 'phys' },
+  // ═══ 理化（八-九年級）═══（翰林版真實章節，來自 go100.com.tw 對照表）
+  // 八上理化
+  { id: 'phys-8a-1', name: '基本測量',               grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-2', name: '物質的世界',             grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-3', name: '波動與聲音',             grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-4', name: '光、影像與顏色',         grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-5', name: '溫度與熱',               grade: 8, subjectId: 'phys' },
+  { id: 'phys-8a-6', name: '物質的基本結構',         grade: 8, subjectId: 'phys' },
+  // 八下理化
+  { id: 'phys-8b-1', name: '化學反應',               grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-2', name: '氧化還原',               grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-3', name: '電解質與酸鹼鹽',         grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-4', name: '化學反應的快慢',         grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-5', name: '有機化合物',             grade: 8, subjectId: 'phys' },
+  { id: 'phys-8b-6', name: '力、壓力與浮力',         grade: 8, subjectId: 'phys' },
+  // 九上理化
+  { id: 'phys-9a-1', name: '直線運動',               grade: 9, subjectId: 'phys' },
+  { id: 'phys-9a-2', name: '力與運動',               grade: 9, subjectId: 'phys' },
+  { id: 'phys-9a-3', name: '功與能',                 grade: 9, subjectId: 'phys' },
+  { id: 'phys-9a-4', name: '電流、電壓與歐姆定律',   grade: 9, subjectId: 'phys' },
+  // 九下理化
+  { id: 'phys-9b-1', name: '電流的熱效應',           grade: 9, subjectId: 'phys' },
+  { id: 'phys-9b-2', name: '電與磁',                 grade: 9, subjectId: 'phys' },
 
-  // ═══ 地科（九年級專屬）═══（簡化版）
-  { id: 'earth-9a-1', name: '地球與宇宙',         grade: 9, subjectId: 'earth' },
-  { id: 'earth-9a-2', name: '大氣與海洋',         grade: 9, subjectId: 'earth' },
-  { id: 'earth-9b-1', name: '氣象與災害',         grade: 9, subjectId: 'earth' },
-  { id: 'earth-9b-2', name: '地質與環境',         grade: 9, subjectId: 'earth' },
+  // ═══ 地科（九年級專屬）═══（翰林版真實章節，來自 go100.com.tw 對照表）
+  // 九上地科
+  { id: 'earth-9a-1', name: '地球的環境',             grade: 9, subjectId: 'earth' },
+  { id: 'earth-9a-2', name: '板塊運動與岩層的祕密',   grade: 9, subjectId: 'earth' },
+  { id: 'earth-9a-3', name: '浩瀚的宇宙',             grade: 9, subjectId: 'earth' },
+  // 九下地科
+  { id: 'earth-9b-1', name: '變化莫測的天氣',         grade: 9, subjectId: 'earth' },
+  { id: 'earth-9b-2', name: '全球變遷',               grade: 9, subjectId: 'earth' },
 ]
 
 // 章節查詢
