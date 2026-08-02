@@ -76,90 +76,99 @@ export function getSubject(stage: Stage, grade: Grade, subjectId: string): Subje
 }
 
 // ============================================================
-// 108 課綱章節資料（國中為主，高中簡化）
+// 108 課綱章節資料（翰林版國中數學 + 其他科簡化版）
+// 資料來源：go100.com.tw 翰林版本對照表
 // ============================================================
-// 章節跨年級通用（例如「數與量」在七年級、八年級、九年級都有）
 
-const JUNIOR_CHAPTERS: Chapter[] = [
-  // ── 國文 ──
-  { id: 'chi-1', name: '課文閱讀與理解',    grade: 7, subjectId: 'chi' },
-  { id: 'chi-2', name: '字音字形',          grade: 7, subjectId: 'chi' },
-  { id: 'chi-3', name: '修辭與文法',        grade: 7, subjectId: 'chi' },
-  { id: 'chi-4', name: '文言文閱讀',        grade: 7, subjectId: 'chi' },
-  { id: 'chi-5', name: '作文與表達',        grade: 7, subjectId: 'chi' },
-  { id: 'chi-6', name: '課文閱讀與理解',    grade: 8, subjectId: 'chi' },
-  { id: 'chi-7', name: '字音字形',          grade: 8, subjectId: 'chi' },
-  { id: 'chi-8', name: '修辭與文法',        grade: 8, subjectId: 'chi' },
-  { id: 'chi-9', name: '文言文閱讀',        grade: 8, subjectId: 'chi' },
-  { id: 'chi-10', name: '作文與表達',       grade: 8, subjectId: 'chi' },
-  { id: 'chi-11', name: '課文閱讀與理解',   grade: 9, subjectId: 'chi' },
-  { id: 'chi-12', name: '字音字形',         grade: 9, subjectId: 'chi' },
-  { id: 'chi-13', name: '修辭與文法',       grade: 9, subjectId: 'chi' },
-  { id: 'chi-14', name: '文言文閱讀',       grade: 9, subjectId: 'chi' },
-  { id: 'chi-15', name: '作文與表達',       grade: 9, subjectId: 'chi' },
+const HL_CHAPTERS: Chapter[] = [
+  // ═══ 數學 ═══
+  // 七上
+  { id: 'math-7a-1', name: '數與數線',             grade: 7, subjectId: 'math' },
+  { id: 'math-7a-2', name: '標準分解式與分數運算', grade: 7, subjectId: 'math' },
+  { id: 'math-7a-3', name: '一元一次方程式',       grade: 7, subjectId: 'math' },
+  { id: 'math-7a-4', name: '線對稱與三視圖',       grade: 7, subjectId: 'math' },
+  // 七下
+  { id: 'math-7b-1', name: '二元一次聯立方程式',               grade: 7, subjectId: 'math' },
+  { id: 'math-7b-2', name: '直角坐標與二元一次方程式的圖形',    grade: 7, subjectId: 'math' },
+  { id: 'math-7b-3', name: '比例',                              grade: 7, subjectId: 'math' },
+  { id: 'math-7b-4', name: '一元一次不等式',                    grade: 7, subjectId: 'math' },
+  { id: 'math-7b-5', name: '統計圖表與統計數據',                grade: 7, subjectId: 'math' },
+  // 八上
+  { id: 'math-8a-1', name: '乘法公式與多項式',     grade: 8, subjectId: 'math' },
+  { id: 'math-8a-2', name: '二次方根與畢氏定理',   grade: 8, subjectId: 'math' },
+  { id: 'math-8a-3', name: '因式分解',             grade: 8, subjectId: 'math' },
+  { id: 'math-8a-4', name: '一元二次方程式',       grade: 8, subjectId: 'math' },
+  { id: 'math-8a-5', name: '統計資料處理',         grade: 8, subjectId: 'math' },
+  // 八下
+  { id: 'math-8b-1', name: '等差數列與級數',       grade: 8, subjectId: 'math' },
+  { id: 'math-8b-2', name: '幾何圖形與尺規作圖',   grade: 8, subjectId: 'math' },
+  { id: 'math-8b-3', name: '三角形的基本性質',     grade: 8, subjectId: 'math' },
+  { id: 'math-8b-4', name: '平行與四邊形',         grade: 8, subjectId: 'math' },
+  // 九上
+  { id: 'math-9a-1', name: '相似形',               grade: 9, subjectId: 'math' },
+  { id: 'math-9a-2', name: '圓的性質',             grade: 9, subjectId: 'math' },
+  { id: 'math-9a-3', name: '幾何證明與推理',       grade: 9, subjectId: 'math' },
+  { id: 'math-9a-4', name: '二次函數',             grade: 9, subjectId: 'math' },
+  { id: 'math-9a-5', name: '資料整理與分析',       grade: 9, subjectId: 'math' },
+  // 九下
+  { id: 'math-9b-1', name: '空間中的立體圖形',     grade: 9, subjectId: 'math' },
+  { id: 'math-9b-2', name: '統計與機率',           grade: 9, subjectId: 'math' },
 
-  // ── 英文 ──
-  { id: 'eng-1', name: '單字與片語',        grade: 7, subjectId: 'eng' },
-  { id: 'eng-2', name: '文法句型',          grade: 7, subjectId: 'eng' },
-  { id: 'eng-3', name: '閱讀測驗',          grade: 7, subjectId: 'eng' },
-  { id: 'eng-4', name: '聽力',              grade: 7, subjectId: 'eng' },
-  { id: 'eng-5', name: '寫作',              grade: 7, subjectId: 'eng' },
-  { id: 'eng-6', name: '單字與片語',        grade: 8, subjectId: 'eng' },
-  { id: 'eng-7', name: '文法句型',          grade: 8, subjectId: 'eng' },
-  { id: 'eng-8', name: '閱讀測驗',          grade: 8, subjectId: 'eng' },
-  { id: 'eng-9', name: '聽力',              grade: 8, subjectId: 'eng' },
-  { id: 'eng-10', name: '寫作',             grade: 8, subjectId: 'eng' },
-  { id: 'eng-11', name: '單字與片語',       grade: 9, subjectId: 'eng' },
-  { id: 'eng-12', name: '文法句型',         grade: 9, subjectId: 'eng' },
-  { id: 'eng-13', name: '閱讀測驗',         grade: 9, subjectId: 'eng' },
-  { id: 'eng-14', name: '聽力',             grade: 9, subjectId: 'eng' },
-  { id: 'eng-15', name: '寫作',             grade: 9, subjectId: 'eng' },
+  // ═══ 國文 ═══（翰林課次主題）
+  { id: 'chi-7a-1', name: '語文常識：標點符號、工具書', grade: 7, subjectId: 'chi' },
+  { id: 'chi-7a-2', name: '閱讀：記敘文',                grade: 7, subjectId: 'chi' },
+  { id: 'chi-7b-1', name: '閱讀：論說文',                grade: 7, subjectId: 'chi' },
+  { id: 'chi-7b-2', name: '語文常識：修辭與文法',        grade: 7, subjectId: 'chi' },
+  { id: 'chi-8a-1', name: '閱讀：抒情文',                grade: 8, subjectId: 'chi' },
+  { id: 'chi-8a-2', name: '文言文選讀',                  grade: 8, subjectId: 'chi' },
+  { id: 'chi-8b-1', name: '寫作：記敘與抒情',            grade: 8, subjectId: 'chi' },
+  { id: 'chi-8b-2', name: '語文常識：書信與便條',        grade: 8, subjectId: 'chi' },
+  { id: 'chi-9a-1', name: '文言文選讀',                  grade: 9, subjectId: 'chi' },
+  { id: 'chi-9b-1', name: '寫作：論說文',                grade: 9, subjectId: 'chi' },
 
-  // ── 數學 ──
-  { id: 'math-1', name: '數與量',           grade: 7, subjectId: 'math' },
-  { id: 'math-2', name: '代數',             grade: 7, subjectId: 'math' },
-  { id: 'math-3', name: '幾何',             grade: 7, subjectId: 'math' },
-  { id: 'math-4', name: '統計與機率',       grade: 7, subjectId: 'math' },
-  { id: 'math-5', name: '數與量',           grade: 8, subjectId: 'math' },
-  { id: 'math-6', name: '代數',             grade: 8, subjectId: 'math' },
-  { id: 'math-7', name: '幾何',             grade: 8, subjectId: 'math' },
-  { id: 'math-8', name: '統計與機率',       grade: 8, subjectId: 'math' },
-  { id: 'math-9', name: '數與量',           grade: 9, subjectId: 'math' },
-  { id: 'math-10', name: '代數',            grade: 9, subjectId: 'math' },
-  { id: 'math-11', name: '幾何',            grade: 9, subjectId: 'math' },
-  { id: 'math-12', name: '統計與機率',      grade: 9, subjectId: 'math' },
-  { id: 'math-13', name: '函數',            grade: 9, subjectId: 'math' },
+  // ═══ 英文 ═══
+  { id: 'eng-7a-1', name: 'Unit 1-3：基礎單字與句型',    grade: 7, subjectId: 'eng' },
+  { id: 'eng-7a-2', name: 'Unit 4-6：現在式',            grade: 7, subjectId: 'eng' },
+  { id: 'eng-7b-1', name: 'Unit 1-3：現在進行式',        grade: 7, subjectId: 'eng' },
+  { id: 'eng-7b-2', name: 'Unit 4-6：Wh- 問句',          grade: 7, subjectId: 'eng' },
+  { id: 'eng-8a-1', name: 'Unit 1-3：過去式',            grade: 8, subjectId: 'eng' },
+  { id: 'eng-8a-2', name: 'Unit 4-6：未來式',            grade: 8, subjectId: 'eng' },
+  { id: 'eng-8b-1', name: 'Unit 1-3：比較級與最高級',    grade: 8, subjectId: 'eng' },
+  { id: 'eng-8b-2', name: 'Unit 4-6：被動語態',          grade: 8, subjectId: 'eng' },
+  { id: 'eng-9a-1', name: 'Unit 1-3：現在完成式',        grade: 9, subjectId: 'eng' },
+  { id: 'eng-9b-1', name: 'Unit 4-6：關係子句',          grade: 9, subjectId: 'eng' },
 
-  // ── 自然科學 ──
-  { id: 'sci-1', name: '生物：生命世界',        grade: 7, subjectId: 'sci' },
-  { id: 'sci-2', name: '生物：細胞與個體',      grade: 7, subjectId: 'sci' },
-  { id: 'sci-3', name: '生物：遺傳與演化',      grade: 7, subjectId: 'sci' },
-  { id: 'sci-4', name: '理化：物質與變化',      grade: 8, subjectId: 'sci' },
-  { id: 'sci-5', name: '理化：力與運動',        grade: 8, subjectId: 'sci' },
-  { id: 'sci-6', name: '理化：電與磁',          grade: 8, subjectId: 'sci' },
-  { id: 'sci-7', name: '理化：熱與能量',        grade: 9, subjectId: 'sci' },
-  { id: 'sci-8', name: '理化：化學反應',        grade: 9, subjectId: 'sci' },
-  { id: 'sci-9', name: '地科：天文與宇宙',      grade: 9, subjectId: 'sci' },
-  { id: 'sci-10', name: '地科：大氣與氣候',     grade: 9, subjectId: 'sci' },
-  { id: 'sci-11', name: '地科：地質與板塊',     grade: 9, subjectId: 'sci' },
+  // ═══ 自然科學 ═══
+  { id: 'sci-7a-1', name: '生物：生命世界',              grade: 7, subjectId: 'sci' },
+  { id: 'sci-7a-2', name: '生物：細胞與個體',            grade: 7, subjectId: 'sci' },
+  { id: 'sci-7b-1', name: '生物：遺傳與演化',            grade: 7, subjectId: 'sci' },
+  { id: 'sci-8a-1', name: '理化：基本測量與物質',        grade: 8, subjectId: 'sci' },
+  { id: 'sci-8a-2', name: '理化：波動與聲音',            grade: 8, subjectId: 'sci' },
+  { id: 'sci-8b-1', name: '理化：化學反應',              grade: 8, subjectId: 'sci' },
+  { id: 'sci-8b-2', name: '理化：力與壓力',              grade: 8, subjectId: 'sci' },
+  { id: 'sci-9a-1', name: '理化：直線運動',              grade: 9, subjectId: 'sci' },
+  { id: 'sci-9a-2', name: '理化：力與運動',              grade: 9, subjectId: 'sci' },
+  { id: 'sci-9a-3', name: '理化：電與磁',                grade: 9, subjectId: 'sci' },
+  { id: 'sci-9b-1', name: '地科：天文與宇宙',            grade: 9, subjectId: 'sci' },
+  { id: 'sci-9b-2', name: '地科：大氣與氣候',            grade: 9, subjectId: 'sci' },
 
-  // ── 社會 ──
-  { id: 'soc-1', name: '歷史：台灣史',          grade: 7, subjectId: 'soc' },
-  { id: 'soc-2', name: '地理：台灣地理',        grade: 7, subjectId: 'soc' },
-  { id: 'soc-3', name: '公民：個人與社會',      grade: 7, subjectId: 'soc' },
-  { id: 'soc-4', name: '歷史：中國史',          grade: 8, subjectId: 'soc' },
-  { id: 'soc-5', name: '地理：中國地理',        grade: 8, subjectId: 'soc' },
-  { id: 'soc-6', name: '公民：權利與義務',      grade: 8, subjectId: 'soc' },
-  { id: 'soc-7', name: '歷史：世界史',          grade: 9, subjectId: 'soc' },
-  { id: 'soc-8', name: '地理：世界地理',        grade: 9, subjectId: 'soc' },
-  { id: 'soc-9', name: '公民：民主與法治',      grade: 9, subjectId: 'soc' },
+  // ═══ 社會 ═══（翰林版歷史/地理/公民��
+  { id: 'soc-7a-1', name: '歷史：台灣史（史前-清領）',  grade: 7, subjectId: 'soc' },
+  { id: 'soc-7a-2', name: '地理：台灣地理（自然環境）',  grade: 7, subjectId: 'soc' },
+  { id: 'soc-7b-1', name: '公民：個人與社會',            grade: 7, subjectId: 'soc' },
+  { id: 'soc-8a-1', name: '歷史：中國史（先秦-宋元）',  grade: 8, subjectId: 'soc' },
+  { id: 'soc-8a-2', name: '地理：中國地理',              grade: 8, subjectId: 'soc' },
+  { id: 'soc-8b-1', name: '公民：權利與義務',            grade: 8, subjectId: 'soc' },
+  { id: 'soc-9a-1', name: '歷史：世界史（近代-現代）',  grade: 9, subjectId: 'soc' },
+  { id: 'soc-9a-2', name: '地理：世界地理',              grade: 9, subjectId: 'soc' },
+  { id: 'soc-9b-1', name: '公民：民主與法治',            grade: 9, subjectId: 'soc' },
 ]
 
 // 章節查詢
 export function getChapters(grade: Grade, subjectId: string): Chapter[] {
-  return JUNIOR_CHAPTERS.filter(c => c.grade === grade && c.subjectId === subjectId)
+  return HL_CHAPTERS.filter(c => c.grade === grade && c.subjectId === subjectId)
 }
 
 export function getChapter(grade: Grade, subjectId: string, chapterId: string): Chapter | undefined {
-  return JUNIOR_CHAPTERS.find(c => c.grade === grade && c.subjectId === subjectId && c.id === chapterId)
+  return HL_CHAPTERS.find(c => c.grade === grade && c.subjectId === subjectId && c.id === chapterId)
 }
