@@ -32,9 +32,9 @@ export function getSupabase(): SupabaseClient | null {
   const cfg = loadSupabaseConfig()
   if (!cfg) return null
   if (_client) return _client
-  // Android Chrome 對 cross-origin fetch 有特殊限制 → 走 Vercel proxy
+  // Android Chrome mobile mode：`new URL('/api/supabase')` 會拋 Invalid URL → 用完整 URL
   const isAndroid = /Android/i.test(navigator.userAgent)
-  const baseUrl = isAndroid ? '/api/supabase' : cfg.url
+  const baseUrl = isAndroid ? `${window.location.origin}/api/supabase` : cfg.url
   _client = createClient(baseUrl, cfg.anonKey, {
     auth: {
       persistSession: true,
