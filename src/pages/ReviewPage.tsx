@@ -51,6 +51,7 @@ export default function ReviewPage() {
   const [filterChapter, setFilterChapter] = useState<string>('all')
   const [randomOrder, setRandomOrder] = useState(true) // 🆕 預設隨機排列
   const [dailyTarget, setDailyTargetGA] = useState(() => getState().todayTarget) // 🆕 每日目標題數
+  const [availableCount, setAvailableCount] = useState(0) // 🆕 篩選範圍內總可用題數
 
   // 開啟時檢查 streak
   useEffect(() => { checkStreak() }, [])
@@ -61,9 +62,11 @@ export default function ReviewPage() {
       if (filterStage !== 'all' && n.stage !== filterStage) return false
       if (filterGrade !== 'all' && n.grade !== filterGrade) return false
       if (filterSubject !== 'all' && n.subjectId !== filterSubject) return false
+      // 🆕 舊資料相容：章節選「全部章節」時保留無 chapterId 的舊題
       if (filterChapter !== 'all' && n.chapterId !== filterChapter) return false
       return true
     })
+    setAvailableCount(filtered.length) // 🆕 總可用題數
     let sorted = randomOrder
       ? shuffle(filtered)
       : [...filtered].sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0))
@@ -271,7 +274,8 @@ export default function ReviewPage() {
               🔀 隨機
             </label>
           </div>
-          {queue.length > 0 && <div className="text-xs text-slate-400">目前顯示 {queue.length} 題</div>}
+          {queue.length > 0 && <div className="text-xs text-slate-400">📊 此範圍有 {availableCount} 題待複習，今日選出 {queue.length} 題</div>}
+          {availableCount === 0 && filterSubject !== 'all' && <div className="text-xs text-rose-500">⚠️ 此範圍沒有待複習題目（可能是舊資料未標章節）</div>}
         </div>
       </details>
 
