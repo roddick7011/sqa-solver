@@ -48,7 +48,7 @@ export default function ReviewPage() {
   const [filterStage, setFilterStage] = useState<Stage | 'all'>('all')
   const [filterGrade, setFilterGrade] = useState<Grade | 'all'>('all')
   const [filterSubject, setFilterSubject] = useState<string>('all')
-  const [filterChapter, setFilterChapter] = useState<string>('all')
+  const [filterChapters, setFilterChapters] = useState<Set<string>>(new Set()) // 🆕 多選章節 checkbox
   const [randomOrder, setRandomOrder] = useState(true) // 🆕 預設隨機排列
   const [dailyTarget, setDailyTargetGA] = useState(() => getState().todayTarget) // 🆕 每日目標題數
   const [availableCount, setAvailableCount] = useState(0) // 🆕 篩選範圍內總可用題數
@@ -62,8 +62,8 @@ export default function ReviewPage() {
       if (filterStage !== 'all' && n.stage !== filterStage) return false
       if (filterGrade !== 'all' && n.grade !== filterGrade) return false
       if (filterSubject !== 'all' && n.subjectId !== filterSubject) return false
-      // 🆕 舊資料相容：章節選「全部章節」時保留無 chapterId 的舊題
-      if (filterChapter !== 'all' && n.chapterId !== filterChapter) return false
+      // 🆕 多選章節：勾了才篩，沒勾 = 全選（含舊題）
+      if (filterChapters.size > 0 && (!n.chapterId || !filterChapters.has(n.chapterId))) return false
       return true
     })
     setAvailableCount(filtered.length) // 🆕 總可用題數
@@ -78,7 +78,7 @@ export default function ReviewPage() {
     setIndex(0)
     setDone(false)
     setStats({ correct: 0, wrong: 0 })
-  }, [dueNotes, filterStage, filterGrade, filterSubject, filterChapter, randomOrder])
+  }, [dueNotes, filterStage, filterGrade, filterSubject, filterChapters, randomOrder])
 
   // 首次 dueNotes 就緒
   useEffect(() => {
@@ -155,13 +155,13 @@ export default function ReviewPage() {
           <summary className="cursor-pointer font-medium text-slate-600">🔍 篩選範圍（預設全部）</summary>
           <div className="mt-3 space-y-2">
             <div className="flex flex-wrap gap-2">
-              <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+              <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapters(new Set()) }} className="input text-xs py-1">
                 <option value="all">全部學制</option>
                 <option value="junior">國中</option>
                 <option value="senior">高中</option>
               </select>
               {filterStage !== 'all' && (
-                <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+                <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapters(new Set()) }} className="input text-xs py-1">
                   <option value="all">全部年級</option>
                   {STAGE_GRADES[filterStage].map(g => (
                     <option key={g} value={g}>{GRADE_LABELS[g]}</option>
@@ -232,13 +232,13 @@ export default function ReviewPage() {
         <summary className="cursor-pointer font-medium text-slate-600">🔍 篩選範圍（預設全部）</summary>
         <div className="mt-3 space-y-2">
           <div className="flex flex-wrap gap-2">
-            <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+            <select value={filterStage} onChange={e => { setFilterStage(e.target.value as Stage | 'all'); setFilterGrade('all'); setFilterSubject('all'); setFilterChapters(new Set()) }} className="input text-xs py-1">
               <option value="all">全部學制</option>
               <option value="junior">國中</option>
               <option value="senior">高中</option>
             </select>
             {filterStage !== 'all' && (
-              <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapter('all') }} className="input text-xs py-1">
+              <select value={filterGrade} onChange={e => { setFilterGrade(e.target.value as Grade | 'all'); setFilterSubject('all'); setFilterChapters(new Set()) }} className="input text-xs py-1">
                 <option value="all">全部年級</option>
                 {STAGE_GRADES[filterStage].map(g => (
                   <option key={g} value={g}>{GRADE_LABELS[g]}</option>
@@ -246,7 +246,7 @@ export default function ReviewPage() {
               </select>
             )}
             {filterGrade !== 'all' && (
-              <select value={filterSubject} onChange={e => { setFilterSubject(e.target.value); setFilterChapter('all') }} className="input text-xs py-1">
+              <select value={filterSubject} onChange={e => { setFilterSubject(e.target.value); setFilterChapters(new Set()) }} className="input text-xs py-1">
                 <option value="all">全部科目</option>
                 {Array.from(new Set(dueNotes.filter(n => n.stage === filterStage && n.grade === filterGrade).map(n => n.subjectId)))
                   .map(sid => {
@@ -256,18 +256,45 @@ export default function ReviewPage() {
               </select>
             )}
             {filterSubject !== 'all' && (
-              <select value={filterChapter} onChange={e => setFilterChapter(e.target.value)} className="input text-xs py-1">
-                <option value="all">全部章節</option>
-                {Array.from(new Set(dueNotes
-                  .filter(n => n.stage === filterStage && n.grade === filterGrade && n.subjectId === filterSubject)
-                  .map(n => n.chapterId).filter(Boolean)))
-                  .map(cid => {
-                    const chapters = getChapters(filterGrade as Grade, filterSubject)
-                    const ch = chapters.find(c => c.id === cid)
-                    return ch ? <option key={cid} value={cid}>{ch.name}</option> : null
-                  })
-                }
-              </select>
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs text-slate-600 font-medium">章節（複選，不勾 = 全部章節）</div>
+                  <button
+                    type="button"
+                    onClick={() => setFilterChapters(new Set())}
+                    className="text-xs text-primary-600"
+                  >
+                    清除選取
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto border border-slate-200 rounded p-2 bg-white">
+                  {getChapters(filterGrade as Grade, filterSubject).map(ch => {
+                    const checked = filterChapters.has(ch.id)
+                    const hasNote = dueNotes.some(n =>
+                      n.stage === filterStage && n.grade === filterGrade && n.subjectId === filterSubject && n.chapterId === ch.id
+                    )
+                    return (
+                      <label key={ch.id} className={`flex items-center gap-2 text-sm py-0.5 cursor-pointer hover:bg-slate-50 px-1 rounded ${hasNote ? '' : 'opacity-50'}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={e => {
+                            const next = new Set(filterChapters)
+                            if (e.target.checked) next.add(ch.id)
+                            else next.delete(ch.id)
+                            setFilterChapters(next)
+                          }}
+                        />
+                        <span className="flex-1">{ch.name}</span>
+                        {hasNote && <span className="text-xs text-emerald-600">●</span>}
+                      </label>
+                    )
+                  })}
+                  {getChapters(filterGrade as Grade, filterSubject).length === 0 && (
+                    <div className="text-xs text-slate-400 text-center py-2">此科目沒有章節資料</div>
+                  )}
+                </div>
+              </div>
             )}
             <label className="flex items-center gap-1 text-xs">
               <input type="checkbox" checked={randomOrder} onChange={e => setRandomOrder(e.target.checked)} />
