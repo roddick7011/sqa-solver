@@ -39,7 +39,6 @@ export default function QuestionPage() {
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
   const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
-  const cleanedImageRef = useRef<string | undefined>() // 🆕 清理後的圖片 dataURL
   const [cleanResult, setCleanResult] = useState<CleanResult | null>(null) // 🆕 清理結果
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)

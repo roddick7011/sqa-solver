@@ -1,6 +1,6 @@
 // M3 手寫標記偵測
 // 送回 bounding boxes → 用來引導顏色分割
-import type { AIConfig } from './types'
+import type { AIConfig } from '../ai/types'
 
 interface DetectedMark {
   bbox: { x1: number; y1: number; x2: number; y2: number }
