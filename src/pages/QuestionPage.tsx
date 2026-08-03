@@ -7,6 +7,7 @@ import { approxDataUrlSize, compressImage } from '../utils/image'
 import { formatAnswer } from '../utils/format'
 import ImageCropper from '../components/ImageCropper'
 import { useAuth } from '../contexts/AuthContext'
+import { cleanMarks } from '../utils/cleanImage'
 
 const DRAFT_KEY = 'sqa:pending-solution'
 
@@ -80,10 +81,18 @@ export default function QuestionPage() {
         return
       }
 
+      // 🆕 清理標記後再送 AI
+      let solveImage = image // 🆕 用於儲存清理後的圖片
+      if (ignoreMarks && image) {
+        setError('🖌️ 清除手寫標��中…')
+        try { solveImage = await cleanMarks(image) } catch {}
+        setError('')
+      }
+
       const result = await solver.solve(
         {
           questionText: text,
-          questionImage: image,
+          questionImage: solveImage,
           subjectName: sub.name,
           gradeLabel: `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}`,
           ignoreMarks,  // 🆕
@@ -116,9 +125,9 @@ export default function QuestionPage() {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       stage: s, grade: g, subjectId: sub.id,
       chapterId,
-            // 🆕 AI 謄寫版優先，若有圖表則保留原圖
+            // 🆕 AI 謄寫版優先，若有圖表則保留（已清理的）圖片
       questionText: cleanedQuestion || text,
-      questionImage: keepImage ? image : undefined,
+      questionImage: keepImage ? (solveImage || image) : undefined,
       aiSolution: solution,
       aiCues,
       aiSummary,
