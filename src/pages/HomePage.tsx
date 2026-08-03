@@ -4,6 +4,8 @@ import { db } from '../db/db'
 import { STAGE_LABELS, STAGE_GRADES } from '../data/curriculum'
 import { calcStreak, filterDue } from '../utils/srs'
 import { useProfile } from '../contexts/ProfileContext'
+import { checkStreak, getState } from '../utils/gamification'
+import { useEffect, useState } from 'react'
 
 export default function HomePage() {
   const { current } = useProfile()
@@ -12,6 +14,10 @@ export default function HomePage() {
   const dueCount = filterDue(myNotes).length
   const streak = calcStreak(myNotes)
   const totalCount = myNotes.length
+
+  // 🆕 Gamification
+  const [gs, setGs] = useState(() => { checkStreak(); return getState() })
+  useEffect(() => { const t = setInterval(() => setGs(getState()), 5000); return () => clearInterval(t) }, [])
 
   return (
     <div className="space-y-6">
@@ -23,6 +29,31 @@ export default function HomePage() {
         <p className="mt-1 text-sm text-slate-600">
           選一個學制開始。可以拍照題目或手打，AI 會給你詳解，再用康乃爾筆記整理。
         </p>
+      </section>
+
+      {/* 🆕 Gamification 面板 */}
+      <section className="card p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-2xl">🔥</div>
+              <div className="text-xs text-slate-500">連續</div>
+              <div className="font-bold text-lg">{gs.streak}</div>
+              <div className="text-xs text-slate-400">天</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl">⭐</div>
+              <div className="text-xs text-slate-500">累積</div>
+              <div className="font-bold text-lg">{gs.stars}</div>
+              <div className="text-xs text-slate-400">顆</div>
+            </div>
+          </div>
+          <div className="text-right text-xs text-slate-500 space-y-1">
+            <div>今日目標：{gs.todayTarget} 題</div>
+            <div>今日已寫：{gs.todayDone} 題</div>
+            <div>凍結剩餘：{3 - gs.freezeUsed} / 3 次</div>
+          </div>
+        </div>
       </section>
 
       {totalCount > 0 && (

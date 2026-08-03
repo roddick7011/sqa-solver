@@ -12,6 +12,7 @@ import { useProfile } from '../contexts/ProfileContext'
 import { useAuth } from '../contexts/AuthContext'
 import { pushNote } from '../cloud/sync'
 import { notifySyncError } from '../utils/notify'
+import { checkStreak, getState, onDailyDone, onReviewComplete, setDailyTarget, starsForCount } from '../utils/gamification'
 
 // Fisher-Yates shuffle
 function shuffle<T>(arr: T[]): T[] {
@@ -41,6 +42,7 @@ export default function ReviewPage() {
   const [done, setDone] = useState(false)
   const [queue, setQueue] = useState<WrongNote[]>([])
   const [ready, setReady] = useState(false)
+  const [rewardEarned, setRewardEarned] = useState(0) // 🆕 這次拿到的星星
 
   // 🆕 章節篩選
   const [filterStage, setFilterStage] = useState<Stage | 'all'>('all')
@@ -48,8 +50,12 @@ export default function ReviewPage() {
   const [filterSubject, setFilterSubject] = useState<string>('all')
   const [filterChapter, setFilterChapter] = useState<string>('all')
   const [randomOrder, setRandomOrder] = useState(true) // 🆕 預設隨機排列
+  const [dailyTarget, setDailyTargetGA] = useState(() => getState().todayTarget) // 🆕 每日目標題數
 
-  // 進入頁面時（或篩選變更時），把 due 順序排好
+  // 開啟時檢查 streak
+  useEffect(() => { checkStreak() }, [])
+
+  // 進入頁面時（或篩選變更時），把 due 順序排好，並限制題數
   useEffect(() => {
     let filtered = dueNotes.filter(n => {
       if (filterStage !== 'all' && n.stage !== filterStage) return false
@@ -58,9 +64,13 @@ export default function ReviewPage() {
       if (filterChapter !== 'all' && n.chapterId !== filterChapter) return false
       return true
     })
-    const sorted = randomOrder
+    let sorted = randomOrder
       ? shuffle(filtered)
       : [...filtered].sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0))
+    // 🆕 限制每日題數（不超過目標）
+    const gs = getState()
+    const remaining = Math.max(1, gs.todayTarget - gs.todayDone)
+    sorted = sorted.slice(0, remaining)
     setQueue(sorted)
     setIndex(0)
     setDone(false)
@@ -105,7 +115,12 @@ export default function ReviewPage() {
     const all = await db.notes.toArray()
     saveAutoSnapshot(all)
     setStats(s => result === 'correct' ? { ...s, correct: s.correct + 1 } : { ...s, wrong: s.wrong + 1 })
+    // 🆕 記錄每日答題
+    onReviewComplete()
     if (index + 1 >= queue.length) {
+      // 🆕 完成今日全部 → 給星星
+      const { earned } = onDailyDone()
+      setRewardEarned(earned)
       setDone(true)
     } else {
       setIndex(i => i + 1)
@@ -166,6 +181,7 @@ export default function ReviewPage() {
   if (done) {
     const total = stats.correct + stats.wrong
     const accuracy = total > 0 ? Math.round(stats.correct / total * 100) : 0
+    const gs = getState()
     return (
       <div className="space-y-4">
         <h2 className="text-lg font-bold">🎉 今日複習完成</h2>
@@ -174,6 +190,23 @@ export default function ReviewPage() {
           <div className="text-2xl font-bold">{accuracy}% 答對</div>
           <div className="text-sm text-slate-600">
             總共 {total} 題 · ✓ {stats.correct} 答對 · ✗ {stats.wrong} 待加強
+          </div>
+          {/* 🆕 星星獎勵 */}
+          <div className="text-center pt-3 border-t border-slate-200">
+            <div className="text-lg font-bold text-amber-600">+{rewardEarned} ⭐</div>
+            <div className="text-xs text-slate-500">累積 {gs.stars} ⭐ · 🔥 連續 {gs.streak} 天</div>
+          </div>
+        </div>
+        {/* 🆕 調整目標 */}
+        <div className="card p-3 space-y-2">
+          <div className="text-sm font-medium text-slate-600">調整每日複習題數</div>
+          <div className="flex gap-2 flex-wrap">
+            {[3, 5, 10, 15].map(n => (
+              <button key={n} onClick={() => { setDailyTargetGA(n); setDailyTarget(n) }}
+                className={`px-3 py-1.5 rounded text-sm ${dailyTarget === n ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                {n} 題 {starsForCount(n) >= 2 ? `${'⭐'.repeat(starsForCount(n))}` : ''}
+              </button>
+            ))}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
