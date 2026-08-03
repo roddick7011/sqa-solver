@@ -56,35 +56,28 @@ function isInkPixel(r: number, g: number, b: number, inkType: string): boolean {
   }
 }
 
-// ── 簡單的周邊顏色填充（非 OpenCV Telea，但對小區域夠用）──
-// 用 mask 鄰近的非 mask 像素平均值填充
-function simpleFill(pixels: Uint8ClampedArray, mask: Uint8Array, w: number, h: number) {
-  for (let y = 0; y < h; y++) {
+// ── 取得紙張背景色（取圖片四個角落的平均）──
+function getPaperColor(pixels: Uint8ClampedArray, w: number, h: number): [number, number, number] {
+  // 取頂部 5% 的區域平均（通常是紙張邊緣）
+  const sampleH = Math.floor(h * 0.05)
+  let rSum = 0, gSum = 0, bSum = 0, count = 0
+  for (let y = 0; y < Math.max(sampleH, 5); y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x
-      if (!mask[i]) continue
+      rSum += pixels[i * 4]; gSum += pixels[i * 4 + 1]; bSum += pixels[i * 4 + 2]
+      count++
+    }
+  }
+  return [Math.round(rSum / count), Math.round(gSum / count), Math.round(bSum / count)]
+}
 
-      // 取 8 鄰域中非 mask 像素的平均
-      let rSum = 0, gSum = 0, bSum = 0, count = 0
-      for (let dy = -2; dy <= 2; dy++) {
-        for (let dx = -2; dx <= 2; dx++) {
-          if (dx === 0 && dy === 0) continue
-          const nx = x + dx, ny = y + dy
-          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue
-          const ni = ny * w + nx
-          if (!mask[ni]) {
-            rSum += pixels[ni * 4]
-            gSum += pixels[ni * 4 + 1]
-            bSum += pixels[ni * 4 + 2]
-            count++
-          }
-        }
-      }
-      if (count > 0) {
-        pixels[i * 4] = Math.round(rSum / count)
-        pixels[i * 4 + 1] = Math.round(gSum / count)
-        pixels[i * 4 + 2] = Math.round(bSum / count)
-      }
+// ── 直接填充為紙張背景色（不等於淡化）──
+function fillToPaper(pixels: Uint8ClampedArray, mask: Uint8Array, w: number, h: number, paperR: number, paperG: number, paperB: number) {
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i]) {
+      pixels[i * 4] = paperR
+      pixels[i * 4 + 1] = paperG
+      pixels[i * 4 + 2] = paperB
     }
   }
 }
@@ -161,9 +154,10 @@ export async function cleanWithM3(dataUrl: string): Promise<CleanResult> {
         }
       }
 
-      // ── Phase 3：簡單填充 ──
+      // ── Phase 3：取得紙張底色並直接填充 ──
       if (detectedCount > 0) {
-        simpleFill(pixels, mask, w, h)
+        const [paperR, paperG, paperB] = getPaperColor(pixels, w, h)
+        fillToPaper(pixels, mask, w, h, paperR, paperG, paperB)
       }
 
       ctx.putImageData(imageData, 0, 0)

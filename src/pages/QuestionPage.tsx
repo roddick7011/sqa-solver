@@ -39,6 +39,7 @@ export default function QuestionPage() {
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
   const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
+  const [cleanedImage, setCleanedImage] = useState<string | undefined>() // 🆕 清理後的圖片（state，非 ref）
   const [cleanResult, setCleanResult] = useState<CleanResult | null>(null) // 🆕 清理結果
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
@@ -90,9 +91,9 @@ export default function QuestionPage() {
         try {
           const result = await cleanWithM3(image)
           solveImage = result.afterUrl
-          cleanedImageRef.current = result.afterUrl
+          setCleanedImage(result.afterUrl)
           setCleanResult(result)
-        } catch { cleanedImageRef.current = undefined }
+        } catch { setCleanedImage(undefined) }
         setError('')
       }
 
@@ -134,7 +135,7 @@ export default function QuestionPage() {
       chapterId,
             // 🆕 AI 謄寫版優先，若有圖表則保留（已清理的）圖片
       questionText: cleanedQuestion || text,
-      questionImage: keepImage ? (cleanedImageRef.current ?? image) : undefined,
+      questionImage: keepImage ? (cleanedImage ?? image) : undefined,
       aiSolution: solution,
       aiCues,
       aiSummary,
