@@ -220,7 +220,19 @@ export default function ReviewPage() {
     )
   }
 
-  if (!current) return null
+  if (!current) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold">📚 複習模式</h2>
+        <div className="card p-8 text-center text-slate-500">
+          <div className="text-5xl mb-3">🤔</div>
+          <div className="font-semibold mb-1">這個範圍沒有可複習的題目</div>
+          <div className="text-sm mb-4">試著放寬篩選條件（取消勾選章節、換個科目，或到 /notebook 新增錯題）</div>
+          <Link to="/notebook" className="btn-secondary inline-block text-sm">去錯題本新增</Link>
+        </div>
+      </div>
+    )
+  }
 
   const sub = getSubject(current.stage, current.grade, current.subjectId)
   const progress = `${index + 1} / ${queue.length}`
