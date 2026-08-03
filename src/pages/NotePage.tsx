@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { GRADE_LABELS, getSubject, STAGE_LABELS } from '../data/curriculum'
+import { GRADE_LABELS, getChapters, getSubject, STAGE_LABELS } from '../data/curriculum'
 import type { Grade, Stage, WrongNote } from '../types'
 import { db } from '../db/db'
 import { formatAnswer } from '../utils/format'
@@ -52,6 +52,7 @@ export default function NotePage() {
         setQuestionText(n.questionText)
         setQuestionImage(n.questionImage)
         setAiSolution(n.aiSolution)
+        setChapterId(n.chapterId)  // 🆕 讀取章節
         setEditingId(n.id)
       })
     } else {
@@ -177,6 +178,19 @@ export default function NotePage() {
         <div className="flex-1">
           <div className="font-semibold">{sub.name}</div>
           <div className="text-xs text-slate-500">{STAGE_LABELS[s]}・{GRADE_LABELS[g]}</div>
+          {/* 🆕 章節選擇（可修改存錯位置的題目） */}
+          <div className="mt-1">
+            <select
+              value={chapterId ?? ''}
+              onChange={e => setChapterId(e.target.value || undefined)}
+              className="input text-xs py-1 w-full"
+            >
+              <option value="">未分類章節</option>
+              {getChapters(g, sub.id).map(ch => (
+                <option key={ch.id} value={ch.id}>{ch.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <button
           onClick={() => setStarred(s => !s)}
