@@ -7,7 +7,7 @@ import { approxDataUrlSize, compressImage } from '../utils/image'
 import { formatAnswer } from '../utils/format'
 import ImageCropper from '../components/ImageCropper'
 import { useAuth } from '../contexts/AuthContext'
-import { cleanWithM3, type CleanResult } from '../utils/cleanImage'
+import { cleanDocument, type CleanResult, type FadeParams } from '../utils/cleanImage'
 
 const DRAFT_KEY = 'sqa:pending-solution'
 
@@ -41,6 +41,25 @@ export default function QuestionPage() {
   const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
   const [cleanedImage, setCleanedImage] = useState<string | undefined>() // 🆕 清理後的圖片（state，非 ref）
   const [cleanResult, setCleanResult] = useState<CleanResult | null>(null) // 🆕 清理結果
+  const [fadeParams, setFadeParams] = useState<FadeParams>({
+    redFade: 70, blueFade: 70, sensitivity: 50, blackProtect: 80, bgClean: 50
+  }) // 🆕 slider 參數
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  // 即時預覽：slider 變更後 100ms debounce 重新清理
+  function onFadeChange(key: keyof FadeParams, value: number) {
+    const next = { ...fadeParams, [key]: value }
+    setFadeParams(next)
+    if (!image) return
+    clearTimeout(fadeTimerRef.current)
+    fadeTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await cleanDocument(image!, next)
+        setCleanResult(result)
+        setCleanedImage(result.afterUrl)
+      } catch {}
+    }, 100)
+  }
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
 
@@ -87,9 +106,9 @@ export default function QuestionPage() {
       // 🆕 M3 偵測 + 清理標記後再送 AI
       let solveImage: string | undefined = image
       if (ignoreMarks && image) {
-        setError('🖌️ M3 偵測手寫 + 清除中…')
+        setError('🖌️ 清除筆跡中…')
         try {
-          const result = await cleanWithM3(image)
+          const result = await cleanDocument(image, fadeParams)
           solveImage = result.afterUrl
           setCleanedImage(result.afterUrl)
           setCleanResult(result)
@@ -300,20 +319,34 @@ export default function QuestionPage() {
             </div>
           </div>
 
-          {/* 🆕 清理前後預覽 */}
-          {cleanResult && cleanResult.detectedCount > 0 && (
-            <div className="card p-3 space-y-2">
+          {/* 🆕 淡化參數 + 前後預覽 */}
+          {cleanResult && (
+            <div className="card p-3 space-y-3">
               <div className="text-sm font-medium text-slate-600">
-                🖌️ 清除 {cleanResult.detectedCount} 個彩色像素（用時 {cleanResult.elapsedMs}ms）
+                🖌️ 連續淡化（用時 {cleanResult.elapsedMs}ms）
               </div>
+              {/* Sliders */}
+              <div className="space-y-2 text-xs">
+                <SliderRow label="紅色淡化" value={fadeParams.redFade} onChange={v => onFadeChange('redFade', v)} />
+                <SliderRow label="藍／紫淡化" value={fadeParams.blueFade} onChange={v => onFadeChange('blueFade', v)} />
+                <SliderRow label="色彩靈敏度" value={fadeParams.sensitivity} onChange={v => onFadeChange('sensitivity', v)} />
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-slate-500">進階設定</summary>
+                  <div className="mt-2 space-y-2">
+                    <SliderRow label="黑字保護" value={fadeParams.blackProtect} onChange={v => onFadeChange('blackProtect', v)} />
+                    <SliderRow label="背景清理" value={fadeParams.bgClean} onChange={v => onFadeChange('bgClean', v)} />
+                  </div>
+                </details>
+              </div>
+              {/* Preview */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-xs text-slate-400 mb-1">原圖</div>
                   <img src={cleanResult.beforeUrl} alt="原始" className="rounded border border-slate-200 w-full object-contain max-h-40" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 mb-1">純黑白</div>
-                  <img src={cleanResult.afterUrl} alt="純黑白" className="rounded border border-slate-200 w-full object-contain max-h-40" />
+                  <div className="text-xs text-slate-400 mb-1">淡化後</div>
+                  <img src={cleanResult.afterUrl} alt="淡化後" className="rounded border border-slate-200 w-full object-contain max-h-40" />
                 </div>
               </div>
             </div>
@@ -324,6 +357,22 @@ export default function QuestionPage() {
           </button>
         </>
       )}
+    </div>
+  )
+}
+
+// 🆕 Slider 元件
+function SliderRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-20 text-slate-500">{label}</span>
+      <input
+        type="range"
+        min="0" max="100" value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className="flex-1 h-1 accent-primary-500"
+      />
+      <span className="w-8 text-right text-slate-400">{value}</span>
     </div>
   )
 }
