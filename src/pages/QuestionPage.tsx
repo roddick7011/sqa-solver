@@ -7,7 +7,7 @@ import { approxDataUrlSize, compressImage } from '../utils/image'
 import { formatAnswer } from '../utils/format'
 import ImageCropper from '../components/ImageCropper'
 import { useAuth } from '../contexts/AuthContext'
-import { cleanMarks } from '../utils/cleanImage'
+import { cleanWithM3, type CleanResult } from '../utils/cleanImage'
 
 const DRAFT_KEY = 'sqa:pending-solution'
 
@@ -39,6 +39,8 @@ export default function QuestionPage() {
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
   const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
+  const cleanedImageRef = useRef<string | undefined>() // 🆕 清理後的圖片 dataURL
+  const [cleanResult, setCleanResult] = useState<CleanResult | null>(null) // 🆕 清理結果
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
 
@@ -82,11 +84,16 @@ export default function QuestionPage() {
         return
       }
 
-      // 🆕 清理標記後再送 AI
+      // 🆕 M3 偵測 + 清理標記後再送 AI
       let solveImage: string | undefined = image
       if (ignoreMarks && image) {
-        setError('🖌️ 清除手寫標記中…')
-        try { solveImage = await cleanMarks(image); cleanedImageRef.current = solveImage } catch { cleanedImageRef.current = undefined }
+        setError('🖌️ M3 偵測手寫 + 清除中…')
+        try {
+          const result = await cleanWithM3(image)
+          solveImage = result.afterUrl
+          cleanedImageRef.current = result.afterUrl
+          setCleanResult(result)
+        } catch { cleanedImageRef.current = undefined }
         setError('')
       }
 
@@ -292,6 +299,31 @@ export default function QuestionPage() {
               {formatAnswer(solution)}
             </div>
           </div>
+
+          {/* 🆕 清理前後預覽 */}
+          {cleanResult && cleanResult.detectedCount > 0 && (
+            <div className="card p-3 space-y-2">
+              <div className="text-sm font-medium text-slate-600">
+                🖌️ 清除 {cleanResult.detectedCount} 個筆跡像素（用時 {cleanResult.elapsedMs}ms）
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-xs text-slate-400 mb-1">清除前</div>
+                  <img src={cleanResult.beforeUrl} alt="原始圖片" className="rounded border border-slate-200 w-full object-contain max-h-40" />
+                </div>
+                <div>
+                  <div className="text-xs text-slate-400 mb-1">清除後</div>
+                  <img src={cleanResult.afterUrl} alt="清理後" className="rounded border border-slate-200 w-full object-contain max-h-40" />
+                </div>
+              </div>
+              {cleanResult.maskUrl && (
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-rose-500">■ 已清除區域</div>
+                  <img src={cleanResult.maskUrl} alt="mask" className="w-16 h-10 rounded border opacity-80 object-contain" />
+                </div>
+              )}
+            </div>
+          )}
 
           <button onClick={onSaveNote} className="btn-primary w-full">
             📝 整理成康乃爾錯題筆記
