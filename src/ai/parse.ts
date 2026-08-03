@@ -3,6 +3,7 @@ import type { CornellAnalysis } from './types'
 
 export function tryParseSolverOutput(raw: string): {
   solution: string
+  question_clean?: string  // 🆕
   cues?: string
   summary?: string
 } {
