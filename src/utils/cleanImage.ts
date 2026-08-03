@@ -1,99 +1,89 @@
-// 清除手寫標記（M3 偵測 + 顏色分割 + 背景填充）
-import { detectMarks } from './detectMarks'
-import { loadAIConfig } from '../ai/solver'
+// 文件掃描濾鏡：「僅保留黑色內容，去除所有彩色筆跡」
+// 流程：去色 → 填充 → 灰階 → 自適應二值化 → 純黑白輸出
+//
+// 不做 OCR、不用 AI，表格/公式/圖形只要是黑色的都保留
 
-// Canvas 結果
 export interface CleanResult {
-  beforeUrl: string    // 原始圖片（base64）
-  afterUrl: string     // 清理後圖片
-  maskUrl?: string     // 🆕 mask 透明度圖（供預覽用）
+  beforeUrl: string    // 原始圖片
+  afterUrl: string     // 清理後（純黑白）
   detectedCount: number
   elapsedMs: number
-  originalUrl: string  // 永遠保留原圖
 }
 
-// ── HSV 顏色檢測 ──
-function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
-  const rf = r / 255, gf = g / 255, bf = b / 255
-  const max = Math.max(rf, gf, bf), min = Math.min(rf, gf, bf)
-  const d = max - min
-  let h = 0
-  const s = max === 0 ? 0 : d / max
-  const v = max
-  if (d !== 0) {
-    if (max === rf) h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6
-    else if (max === gf) h = ((bf - rf) / d + 2) / 6
-    else h = ((rf - gf) / d + 4) / 6
+// ── 工具：建立 2D kernel 產生器 ──
+function createKernel(w: number[], imgW: number) {
+  const kw = w.length
+  const kh = kw
+  const offsets: number[] = []
+  for (let dy = 0; dy < kh; dy++) {
+    for (let dx = 0; dx < kw; dx++) {
+      offsets.push((dy - Math.floor(kh / 2)) * imgW + (dx - Math.floor(kw / 2)))
+    }
   }
-  return [h * 360, s, v]
+  return { w: w.flat(), offsets, size: kw }
 }
 
-// 針對不同筆跡類型檢查
-function isInkPixel(r: number, g: number, b: number, inkType: string): boolean {
-  const [h, s, v] = rgbToHsv(r, g, b)
-
-  switch (inkType) {
-    case 'colored_ink':  // 紅色 / 藍色筆跡
-      return ((h >= 0 && h <= 20 && s >= 0.15 && v >= 0.20) ||  // 紅色
-              (h >= 340 && s >= 0.15 && v >= 0.20) ||             // 紅色尾端
-              (h >= 190 && h <= 250 && s >= 0.18 && v >= 0.18))   // 藍色
-
-    case 'highlight':    // 螢光筆（高明度）
-      return ((h >= 40 && h <= 70 && s >= 0.25 && v >= 0.40) ||   // 螢光黃綠
-              (h >= 15 && h <= 35 && s >= 0.25 && v >= 0.45) ||   // 螢光橘
-              (h >= 0 && h <= 10 && s >= 0.20 && v >= 0.55))      // 螢光桃紅
-
-    case 'black_pen':    // 黑筆 → 大量降低亮度
-      return (v <= 0.25 && s <= 0.3)
-
-    case 'cross_out':    // 畫叉 / 塗改
-      return ((h >= 0 && h <= 15 && s >= 0.15 && v >= 0.15) ||
-              (h >= 340 && s >= 0.15 && v >= 0.15) ||
-              (v <= 0.22 && s <= 0.3))
-
-    default:
-      return false
-  }
-}
-
-// ── 取得紙張背景色（取圖片四個角落的平均）──
-function getPaperColor(pixels: Uint8ClampedArray, w: number, h: number): [number, number, number] {
-  // 取頂部 5% 的區域平均（通常是紙張邊緣）
-  const sampleH = Math.floor(h * 0.05)
-  let rSum = 0, gSum = 0, bSum = 0, count = 0
-  for (let y = 0; y < Math.max(sampleH, 5); y++) {
+// ── 膨脹（dilate）：把 mask 向外擴張 ──
+function dilate(mask: Uint8Array, w: number, h: number, radius: number = 1): Uint8Array {
+  const out = new Uint8Array(w * h)
+  for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const i = y * w + x
-      rSum += pixels[i * 4]; gSum += pixels[i * 4 + 1]; bSum += pixels[i * 4 + 2]
-      count++
+      const idx = y * w + x
+      if (mask[idx]) {
+        // 在 (x, y) 半徑內的所有像素標記為 1
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const nx = x + dx, ny = y + dy
+            if (nx >= 0 && ny >= 0 && nx < w && ny < h) {
+              out[ny * w + nx] = 1
+            }
+          }
+        }
+      }
     }
   }
-  return [Math.round(rSum / count), Math.round(gSum / count), Math.round(bSum / count)]
+  return out
 }
 
-// ── 直接填充為紙張背景色（不等於淡化）──
-function fillToPaper(pixels: Uint8ClampedArray, mask: Uint8Array, w: number, h: number, paperR: number, paperG: number, paperB: number) {
-  for (let i = 0; i < mask.length; i++) {
-    if (mask[i]) {
-      pixels[i * 4] = paperR
-      pixels[i * 4 + 1] = paperG
-      pixels[i * 4 + 2] = paperB
+// ── 自適應二值化（局部 Sauvola 方法）──
+// 對每個像素根據周圍亮度決定黑白門檻
+function adaptiveThreshold(gray: Uint8Array, w: number, h: number, blockSize: number, C: number): Uint8Array {
+  const out = new Uint8Array(w * h)
+  const halfBlock = Math.floor(blockSize / 2)
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // 計算局部區塊的平均值與標準差
+      let sum = 0, count = 0, sumSq = 0
+      for (let dy = -halfBlock; dy <= halfBlock; dy++) {
+        for (let dx = -halfBlock; dx <= halfBlock; dx++) {
+          const nx = x + dx, ny = y + dy
+          if (nx >= 0 && ny >= 0 && nx < w && ny < h) {
+            const v = gray[ny * w + nx]
+            sum += v
+            sumSq += v * v
+            count++
+          }
+        }
+      }
+      const mean = sum / count
+      const variance = sumSq / count - mean * mean
+      const stdev = Math.sqrt(Math.max(variance, 0))
+      // Sauvola: T = mean * (1 + k * (stdev / R - 1)), k=0.2, R=128
+      const threshold = mean * (1 + 0.2 * (stdev / 128 - 1))
+      out[y * w + x] = gray[y * w + x] < (threshold - C) ? 0 : 255
     }
   }
+  return out
 }
 
-// ── Bbox 正規化座標轉像素座標 ──
-function normToPixel(xNorm: number, yNorm: number, w: number, h: number): [number, number] {
-  return [Math.round(xNorm * w / 1000), Math.round(yNorm * h / 1000)]
-}
-
-// ��─ 主清理流程 ──
+// ── 主清理流程（純黑白輸出）──
 export async function cleanWithM3(dataUrl: string): Promise<CleanResult> {
   const t0 = Date.now()
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = async () => {
+    img.onload = () => {
       const w = img.width, h = img.height
       const canvas = document.createElement('canvas')
       canvas.width = w; canvas.height = h
@@ -102,93 +92,60 @@ export async function cleanWithM3(dataUrl: string): Promise<CleanResult> {
 
       const imageData = ctx.getImageData(0, 0, w, h)
       const pixels = imageData.data
+      const totalPixels = w * h
 
-      // 建立 mask（Uint8Array：每個像素 1 位元標記是否要清除）
-      const mask = new Uint8Array(w * h)
-      let detectedCount = 0
+      // ── Step 1：偵測彩色像素（chroma > 門檻）──
+      const colorMask = new Uint8Array(totalPixels)
+      const CHROMA_THRESHOLD = 35  // 起始值
 
-      // ── Phase 1：M3 偵測 ──
-      let marks: any[] = []
-      try {
-        const cfg = loadAIConfig()
-        marks = await detectMarks(dataUrl, cfg)
-      } catch {
-        // M3 偵測失敗 → fallback 到全圖顏色檢測
-      }
-
-      if (marks.length > 0) {
-        // Phase 2：在 M3 標記的 bbox 內做顏色分割
-        for (const mark of marks) {
-          const [x1, y1] = normToPixel(mark.bbox.x1, mark.bbox.y1, w, h)
-          const [x2, y2] = normToPixel(mark.bbox.x2, mark.bbox.y2, w, h)
-          const bx1 = Math.max(0, Math.min(x1, x2))
-          const by1 = Math.max(0, Math.min(y1, y2))
-          const bx2 = Math.min(w, Math.max(x1, x2))
-          const by2 = Math.min(h, Math.max(y1, y2))
-
-          for (let py = by1; py < by2; py++) {
-            for (let px = bx1; px < bx2; px++) {
-              const i = py * w + px
-              if (mask[i]) continue
-              const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2]
-              if (isInkPixel(r, g, b, mark.type)) {
-                mask[i] = 1
-                detectedCount++
-              }
-            }
-          }
-        }
-      } else {
-        // Fallback：全圖顏色檢測（比舊版範圍更精確）
-        for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
-            const i = y * w + x
-            const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2]
-            if (isInkPixel(r, g, b, 'colored_ink') ||
-                isInkPixel(r, g, b, 'highlight') ||
-                isInkPixel(r, g, b, 'cross_out')) {
-              mask[i] = 1
-              detectedCount++
-            }
-          }
+      for (let i = 0; i < totalPixels; i++) {
+        const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2]
+        const maxRGB = Math.max(r, g, b)
+        const minRGB = Math.min(r, g, b)
+        const chroma = maxRGB - minRGB
+        if (chroma > CHROMA_THRESHOLD) {
+          colorMask[i] = 1
         }
       }
 
-      // ── Phase 3：取得紙張底色並直接填充 ──
-      if (detectedCount > 0) {
-        const [paperR, paperG, paperB] = getPaperColor(pixels, w, h)
-        fillToPaper(pixels, mask, w, h, paperR, paperG, paperB)
+      // ── Step 2：膨脹 mask（捕獲筆跡邊緣和深色中心）──
+      const dilated = dilate(colorMask, w, h, 2)  // 2px 擴張
+
+      // ── Step 3：彩色區域 → 白色 ──
+      let killed = 0
+      for (let i = 0; i < totalPixels; i++) {
+        if (dilated[i]) {
+          pixels[i * 4] = 255
+          pixels[i * 4 + 1] = 255
+          pixels[i * 4 + 2] = 255
+          killed++
+        }
       }
 
+      // ── Step 4：灰階化 ──
+      const gray = new Uint8Array(totalPixels)
+      for (let i = 0; i < totalPixels; i++) {
+        const r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2]
+        gray[i] = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b)
+      }
+
+      // ── Step 5：自適應二值化（處理陰影與光線不均）──
+      const binary = adaptiveThreshold(gray, w, h, 31, 12)
+
+      // ── Step 6：輸出純黑白圖 ──
+      for (let i = 0; i < totalPixels; i++) {
+        const v = binary[i]
+        pixels[i * 4] = v
+        pixels[i * 4 + 1] = v
+        pixels[i * 4 + 2] = v
+      }
       ctx.putImageData(imageData, 0, 0)
-      const afterUrl = canvas.toDataURL('image/jpeg', 0.88)
-
-      // ── 產生 mask 預覽圖 ──
-      let maskUrl: string | undefined
-      if (detectedCount > 0) {
-        const maskCanvas = document.createElement('canvas')
-        maskCanvas.width = w; maskCanvas.height = h
-        const mctx = maskCanvas.getContext('2d')!
-        const mImageData = mctx.getImageData(0, 0, w, h)
-        for (let i = 0; i < mask.length; i++) {
-          if (mask[i]) {
-            mImageData.data[i * 4] = 255
-            mImageData.data[i * 4 + 1] = 0
-            mImageData.data[i * 4 + 2] = 0
-            mImageData.data[i * 4 + 3] = 128
-          }
-        }
-        mctx.putImageData(mImageData, 0, 0)
-        maskUrl = maskCanvas.toDataURL('image/png')
-      }
 
       resolve({
         beforeUrl: dataUrl,
-        afterUrl,
-        maskUrl,
-        detectedCount,
+        afterUrl: canvas.toDataURL('image/png'),
+        detectedCount: killed,
         elapsedMs: Date.now() - t0,
-        originalUrl: dataUrl,
       })
     }
     img.onerror = () => reject(new Error('圖片載入失敗'))
