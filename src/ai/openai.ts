@@ -2,6 +2,32 @@ import type { AISolver, AIConfig, CornellAnalysis, CornellAnalysisInput, SolveIn
 import { CORNELL_ANALYSIS_PROMPT, SOLVER_SYSTEM_PROMPT } from './types'
 import { tryParseCornellAnalysis, tryParseSolverOutput } from './parse'
 
+// 對 5xx / 429 自動重試（最多 3 次，間隔 1.5s）
+async function fetchWithRetry(url: string, opts: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastErr: any
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, opts)
+      if (res.ok) return res
+      // 5xx 或 429 → 重試
+      if ((res.status >= 500 || res.status === 429) && attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
+        continue
+      }
+      return res  // 其他錯誤直接返回
+    } catch (e: any) {
+      lastErr = e
+      if (e?.name === 'AbortError') throw e
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
+        continue
+      }
+      throw e
+    }
+  }
+  throw lastErr
+}
+
 export abstract class OpenAICompatSolver implements AISolver {
   abstract readonly id: string
   abstract readonly displayName: string
@@ -34,7 +60,7 @@ export abstract class OpenAICompatSolver implements AISolver {
       ? `${(this.cfg.customBaseUrl || '').replace(/\/$/, '')}/chat/completions`
       : `${this.baseUrl}/chat/completions`
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       signal,
       headers: {
@@ -62,7 +88,7 @@ export abstract class OpenAICompatSolver implements AISolver {
       ? `${(this.cfg.customBaseUrl || '').replace(/\/$/, '')}/chat/completions`
       : `${this.baseUrl}/chat/completions`
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       signal,
       headers: {
