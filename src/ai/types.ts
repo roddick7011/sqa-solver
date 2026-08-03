@@ -84,7 +84,7 @@ export const SOLVER_SYSTEM_PROMPT = `【語言規範 — 最重要，必須嚴�
 - 數學題的變數、單位（例如寫「公尺」不是「meter」，寫「速度」不是「velocity」）
 - 「關鍵概念」小節
 - 任何對題目的描述與分析
-- `question_clean` 欄位（純文字謄寫版題目）
+- \`question_clean\` 欄位（純文字謄寫版題目）
 
 **禁止**：英文、簡體中文、其他語言夾雜。違反即重寫。
 
