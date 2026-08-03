@@ -36,6 +36,7 @@ export default function QuestionPage() {
   const [compressing, setCompressing] = useState(false)
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
+  const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
 
@@ -115,7 +116,9 @@ export default function QuestionPage() {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       stage: s, grade: g, subjectId: sub.id,
       chapterId,
-      questionText: cleanedQuestion || text, questionImage: image,
+            // 🆕 AI 謄寫版優先，若有圖表則保留原圖
+      questionText: cleanedQuestion || text,
+      questionImage: keepImage ? image : undefined,
       aiSolution: solution,
       aiCues,
       aiSummary,
@@ -184,6 +187,15 @@ export default function QuestionPage() {
                 onChange={e => setIgnoreMarks(e.target.checked)}
               />
               <span>題目有紅筆/藍筆/螢光筆標記，幫我忽略</span>
+            </label>
+            {/* 🆕 題目含圖表 */}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={keepImage}
+                onChange={e => setKeepImage(e.target.checked)}
+              />
+              <span>題目包含圖形或表格，需要保留原圖</span>
             </label>
             <button
               onClick={() => setPendingCrop(image)}
