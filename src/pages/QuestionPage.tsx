@@ -127,6 +127,11 @@ export default function QuestionPage() {
         </div>
       </div>
 
+      {!user && (
+        <div className="card p-3 text-xs text-slate-600 bg-amber-50 border-amber-200">
+          💡 登入後可同步錯題到雲端（多裝置共享）。沒登入也能用 AI 解題。
+        </div>
+      )}
       <div className="card p-4 space-y-3">
         <label className="label">📷 拍題目（選填）</label>
         <input
