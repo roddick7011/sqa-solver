@@ -32,6 +32,7 @@ export default function QuestionPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const cleanedImageRef = useRef<string | undefined>() // 🆕 清理後的圖片
   const abortRef = useRef<AbortController | null>(null)
 
   const [compressing, setCompressing] = useState(false)
@@ -82,10 +83,10 @@ export default function QuestionPage() {
       }
 
       // 🆕 清理標記後再送 AI
-      let solveImage = image // 🆕 用於儲存清理後的圖片
+      let solveImage: string | undefined = image
       if (ignoreMarks && image) {
-        setError('🖌️ 清除手寫標��中…')
-        try { solveImage = await cleanMarks(image) } catch {}
+        setError('🖌️ 清除手寫標記中…')
+        try { solveImage = await cleanMarks(image); cleanedImageRef.current = solveImage } catch { cleanedImageRef.current = undefined }
         setError('')
       }
 
@@ -127,7 +128,7 @@ export default function QuestionPage() {
       chapterId,
             // 🆕 AI 謄寫版優先，若有圖表則保留（已清理的）圖片
       questionText: cleanedQuestion || text,
-      questionImage: keepImage ? (solveImage || image) : undefined,
+      questionImage: keepImage ? (cleanedImageRef.current ?? image) : undefined,
       aiSolution: solution,
       aiCues,
       aiSummary,
