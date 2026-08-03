@@ -43,8 +43,8 @@ export async function detectMarks(dataUrl: string, cfg: AIConfig): Promise<Detec
   const headers: Record<string, string> = {
     'content-type': 'application/json',
   }
-  if (cfg.openaiKey) headers['authorization'] = `Bearer ${cfg.openaiKey}`
-  if (cfg.claudeKey) headers['x-api-key'] = cfg.claudeKey
+  if (cfg.apiKey) headers['authorization'] = `Bearer ${cfg.apiKey}`
+  if (cfg.apiKey) headers['x-api-key'] = cfg.apiKey
 
   let retries = 3
   while (retries > 0) {
