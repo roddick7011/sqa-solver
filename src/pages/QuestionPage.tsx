@@ -6,12 +6,14 @@ import { loadAIConfig, makeSolver } from '../ai/solver'
 import { approxDataUrlSize, compressImage } from '../utils/image'
 import { formatAnswer } from '../utils/format'
 import ImageCropper from '../components/ImageCropper'
+import { useAuth } from '../contexts/AuthContext'
 
 const DRAFT_KEY = 'sqa:pending-solution'
 
 export default function QuestionPage() {
   const { stage, grade, subjectId } = useParams()
   const nav = useNavigate()
+  const { user } = useAuth()  // 🆕
   const s = stage as Stage
   const g = parseInt(grade!, 10) as Grade
   const sub = getSubject(s, g, subjectId!)!
