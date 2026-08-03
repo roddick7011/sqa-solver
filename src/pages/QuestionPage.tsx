@@ -35,6 +35,7 @@ export default function QuestionPage() {
 
   const [compressing, setCompressing] = useState(false)
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
+  const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
 
@@ -91,6 +92,11 @@ export default function QuestionPage() {
       setSolution(result.solution)
       setAiCues(result.cues ?? '')
       setAiSummary(result.summary ?? '')
+      // 🆕 用 AI 謄寫的乾淨題目取代（如果 AI 有回傳）
+      if (result.question_clean) {
+        setText(result.question_clean)
+        setCleanedQuestion(result.question_clean)
+      }
     } catch (e: any) {
       if (e?.name === 'AbortError') return
       setError(e?.message ?? '解題失敗，請檢查 API 設定或網路')
@@ -109,7 +115,7 @@ export default function QuestionPage() {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       stage: s, grade: g, subjectId: sub.id,
       chapterId,
-      questionText: text, questionImage: image,
+      questionText: cleanedQuestion || text, questionImage: image,
       aiSolution: solution,
       aiCues,
       aiSummary,

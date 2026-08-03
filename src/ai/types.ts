@@ -10,6 +10,7 @@ export interface SolveInput {
 
 export interface SolveOutput {
   solution: string        // 純文字詳解
+  question_clean?: string // 🆕 AI 謄寫的乾淨題目（純文字）
   cues?: string           // 康乃爾左欄（單元 / 概念 / 公式）
   summary?: string        // 康乃爾底部（考點 / 技巧 / 注意事項）
 }
@@ -83,6 +84,7 @@ export const SOLVER_SYSTEM_PROMPT = `【語言規範 — 最重要，必須嚴�
 - 數學題的變數、單位（例如寫「公尺」不是「meter」，寫「速度」不是「velocity」）
 - 「關鍵概念」小節
 - 任何對題目的描述與分析
+- `question_clean` 欄位（純文字謄寫版題目）
 
 **禁止**：英文、簡體中文、其他語言夾雜。違反即重寫。
 
@@ -117,6 +119,7 @@ export const SOLVER_SYSTEM_PROMPT = `【語言規範 — 最重要，必須嚴�
 【JSON 輸出 — 非常重要】
 請用以下 JSON 格式回傳（不要用 markdown code block 包，直接給 JSON）：
 {
+  "question_clean": "把圖片中的題目純文字謄寫出來（忽略所有紅筆/藍筆/螢光筆/鉛筆標記，只保留原始印刷題目）。如果沒有圖片，這個欄位可以填空字串。",
   "solution": "完整詳解（含步驟與 💡 關鍵概念）",
   "cues": "本題涵蓋的單元與概念（用 • 條列 3-6 項，例如：• 一元二次方程式\n• 配方法\n• 判別式）",
   "summary": "本題想考什麼、用了什麼解題技巧、注意事項（2-5 句話，含『本題想考』『運用技巧』『注意事項』三段）"
@@ -124,6 +127,7 @@ export const SOLVER_SYSTEM_PROMPT = `【語言規範 — 最重要，必須嚴�
 
 - 如果題目複雜跨多個單元，cues 可以列出多個，但每項要精簡（一行內）
 - summary 不要超過 80 字，盡量濃縮
+- question_clean 必須是純文字（不要 JSON、不要 markdown code block）
 - 嚴格使用上述 JSON 鍵名，不要多加欄位`
 
 // 給康乃爾分析獨立呼叫的 prompt（不解題，只補 cues/summary）

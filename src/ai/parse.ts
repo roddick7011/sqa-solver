@@ -13,6 +13,7 @@ export function tryParseSolverOutput(raw: string): {
       if (parsed && typeof parsed === 'object') {
         return {
           solution: typeof parsed.solution === 'string' ? parsed.solution : raw,
+          question_clean: typeof parsed.question_clean === 'string' ? parsed.question_clean : undefined,  // 🆕
           cues: typeof parsed.cues === 'string' ? parsed.cues : undefined,
           summary: typeof parsed.summary === 'string' ? parsed.summary : undefined,
         }
