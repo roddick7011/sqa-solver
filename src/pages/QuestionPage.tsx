@@ -32,6 +32,7 @@ export default function QuestionPage() {
   const abortRef = useRef<AbortController | null>(null)
 
   const [compressing, setCompressing] = useState(false)
+  const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
 
@@ -81,6 +82,7 @@ export default function QuestionPage() {
           questionImage: image,
           subjectName: sub.name,
           gradeLabel: `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}`,
+          ignoreMarks,  // 🆕
         },
         abortRef.current.signal,
       )
@@ -161,6 +163,15 @@ export default function QuestionPage() {
                 ✕
               </button>
             </div>
+            {/* 🆕 忽略手寫標記 checkbox */}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ignoreMarks}
+                onChange={e => setIgnoreMarks(e.target.checked)}
+              />
+              <span>題目有紅筆/藍筆/螢光筆標記，幫我忽略</span>
+            </label>
             <button
               onClick={() => setPendingCrop(image)}
               className="btn-secondary w-full text-sm"

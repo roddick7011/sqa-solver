@@ -143,7 +143,7 @@ export class CustomSolver extends OpenAICompatSolver {
 }
 
 function buildOpenAIUserContent(input: SolveInput) {
-  const ctx = `科目：${input.subjectName}\n年級：${input.gradeLabel}`
+  const ctx = `科目：${input.subjectName}\n年級：${input.gradeLabel}${input.ignoreMarks ? '\n⚠️ 請忽略圖片中的紅筆/藍筆/螢光筆/鉛筆手寫標記，只取原始印刷題目。' : ''}`
   const parts: any[] = []
 
   if (input.questionImage) {

@@ -3,8 +3,9 @@
 export interface SolveInput {
   questionText: string
   questionImage?: string  // dataURL, e.g. "data:image/jpeg;base64,..."
-  subjectName: string     // 用於 prompt 提示（國文 / 數學 / ...）
-  gradeLabel: string      // 用於 prompt 提示（七年級 / 高二 / ...）
+  subjectName: string     // 用於 prompt 提���（國文 / 數學 / ...）
+  gradeLabel: string      // 用於 prompt 提示���七年級 / 高二 / ...）
+  ignoreMarks?: boolean   // 🆕 是否忽略手寫標記（紅筆/藍筆/螢光筆）
 }
 
 export interface SolveOutput {
@@ -94,7 +95,7 @@ export const SOLVER_SYSTEM_PROMPT = `【語言規範 — 最重要，必須嚴�
 
 【解題流程】
 1. 仔細閱讀學生拍攝或手打的題目（可能含圖片）。
-   若圖片中有紅筆圈選、螢光筆標記、鉛筆手寫筆記等學生記號，**請忽略這些標記**，只取原始印刷題目文字進行解題。
+   若圖片中有紅筆、藍筆圈選、螢光筆標記、鉛筆手寫筆記等學生記號，**請忽略這些標記**，只取原始印刷題目文字進行解題。
 2. 給出**完整、清晰、步驟化**的詳解（用繁體中文）。
 3. 使用台灣常用的學術用語與繁體中文。
 4. 如果題目資訊不足，主動列出需要補充的條件。
