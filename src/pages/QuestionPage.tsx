@@ -38,8 +38,7 @@ export default function QuestionPage() {
   const [compressing, setCompressing] = useState(false)
   const [ignoreMarks, setIgnoreMarks] = useState(false) // 🆕 忽略手寫標記
   const [cleanedQuestion, setCleanedQuestion] = useState('') // 🆕 AI 謄寫的乾淨題目
-  const [keepImage, setKeepImage] = useState(false) // 🆕 題目有圖表：保留原圖
-  const [cleanedImage, setCleanedImage] = useState<string | undefined>() // 🆕 清理後的圖片（state，非 ref）
+  const [cleanedImage, setCleanedImage] = useState<string | undefined>() // 清理後的圖片（永遠存入錯題本） // 🆕 清理後的圖片（state，非 ref）
   const [cleanResult, setCleanResult] = useState<CleanResult | null>(null) // 🆕 清理結果
   const [fadeParams, setFadeParams] = useState<FadeParams>({
     redFade: 70, blueFade: 70, sensitivity: 50, blackProtect: 80, bgClean: 50
@@ -152,9 +151,10 @@ export default function QuestionPage() {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       stage: s, grade: g, subjectId: sub.id,
       chapterId,
-            // 🆕 AI 謄寫版優先，若有圖表則保留（已清理的）圖片
+            // 🆕 淡化後的圖片永遠存入（供未來 PDF / 複習用）
+      // 純文字題也有圖（等同掃描檔），以後不需要回頭找原圖
       questionText: cleanedQuestion || text,
-      questionImage: keepImage ? (cleanedImage ?? image) : undefined,
+      questionImage: cleanedImage || image || undefined,
       aiSolution: solution,
       aiCues,
       aiSummary,
@@ -222,16 +222,7 @@ export default function QuestionPage() {
                 checked={ignoreMarks}
                 onChange={e => setIgnoreMarks(e.target.checked)}
               />
-              <span>題目有紅筆/藍筆/螢光筆標記，幫我忽略</span>
-            </label>
-            {/* 🆕 題目含圖表 */}
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={keepImage}
-                onChange={e => setKeepImage(e.target.checked)}
-              />
-              <span>題目包含圖形或表格，需要保留原圖</span>
+              <span>題目���紅筆/藍筆/螢光筆標記，幫我忽略</span>
             </label>
             <button
               onClick={() => setPendingCrop(image)}
