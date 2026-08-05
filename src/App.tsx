@@ -10,6 +10,8 @@ import NotebookPage from './pages/NotebookPage'
 import SettingsPage from './pages/SettingsPage'
 import ReviewPage from './pages/ReviewPage'
 import LoginPage from './pages/LoginPage'
+import PrintSetupPage from './pages/PrintSetupPage'
+import PrintPage from './pages/PrintPage'
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="/stage/:stage/grade/:grade/subject/:subjectId/note/:id" element={<NotePage />} />
         <Route path="/notebook" element={<NotebookPage />} />
         <Route path="/review" element={<ReviewPage />} />
+        <Route path="/print-setup" element={<PrintSetupPage />} />
+        <Route path="/print" element={<PrintPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>

@@ -68,7 +68,10 @@ export default function NotebookPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold">📚 我的錯題本</h2>
+            <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">📚 我的錯題本</h2>
+        <Link to="/print-setup" className="btn-secondary text-sm">🖨️ PDF 派題</Link>
+      </div>
 
       <div className="card p-3 space-y-2">
         <select
