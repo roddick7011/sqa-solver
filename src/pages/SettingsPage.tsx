@@ -974,7 +974,7 @@ export default function SettingsPage() {
 
       <div className="card p-4 text-xs text-slate-500 space-y-2">
         <div className="font-semibold text-slate-700">關於這個 APP</div>
-        <div>版本 0.1.0 MVP</div>
+        <div>版本 1.0.0</div>
         <div>儲存：IndexedDB（離線可用）</div>
         <div>框架：React + Vite + Tailwind</div>
       </div>
