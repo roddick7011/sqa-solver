@@ -16,17 +16,18 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // 2026-08-02 拿掉 Service Worker
-      // SW 會 cache 舊版 shell，導致手機永遠用舊版（Vercel 部署後看不到新功能）
-      // 解法：完全拿掉 SW，APP 純靠 IndexedDB 運作
-      // 登入後主動清掉舊 SW（給已經被 cache 的使用者一個升級路徑）
+      // 2026-08-06 註冊「空殼 SW」：只為滿足 Chrome 安裝條件（beforeinstallprompt）
+      // 不 cache 任何資源 → 不會有 08-02 的舊版快取問題
+      // 順便清掉舊版 SW / 舊 cache（給之前被 cache 的使用者升級路徑）
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          regs.forEach(reg => reg.unregister())
-        })
+        // 先清舊 cache
         if (window.caches) {
           caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
         }
+        // 註冊新 SW（不 cache，純為安裝條件）
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // 註冊失敗不影響主流程，只是沒有安裝 banner
+        })
       }
     </script>
   </body>
