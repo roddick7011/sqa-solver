@@ -3,8 +3,6 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/supabase/(.*)", "destination": "https://ywswimsejtlgzwmydiud.supabase.co/$1" },
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
