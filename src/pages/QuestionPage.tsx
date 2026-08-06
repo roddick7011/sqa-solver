@@ -384,6 +384,8 @@ export default function QuestionPage() {
         open={showCategorize}
         onClose={() => setShowCategorize(false)}
         onConfirm={onCategorizeConfirm}
+        questionText={cleanedQuestion || text}
+        questionImage={cleanedImage || image}
       />
     </div>
   )
