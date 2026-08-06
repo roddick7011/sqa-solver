@@ -90,6 +90,23 @@ export default function HomePage() {
         </Link>
       )}
 
+      {/* 🆕 自由解題：不需先選學制年級 */}
+      <Link
+        to="/ask"
+        className="card p-5 flex items-center gap-4 active:scale-[0.99] transition-transform bg-gradient-to-br from-primary-50 to-white border-primary-200"
+      >
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-primary-600 text-white">
+          ⚡
+        </div>
+        <div className="flex-1">
+          <div className="font-semibold text-lg">AI 解題</div>
+          <div className="text-sm text-slate-500">
+            不確定是哪個年級？直接解題，之後再分類
+          </div>
+        </div>
+        <span className="text-slate-400">›</span>
+      </Link>
+
       <section className="space-y-3">
         {(['junior', 'senior'] as const).map(stage => (
           <Link

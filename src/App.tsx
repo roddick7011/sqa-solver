@@ -23,6 +23,7 @@ export default function App() {
         <Route path="/stage/:stage/grade/:grade" element={<SubjectPage />} />
         <Route path="/stage/:stage/grade/:grade/subject/:subjectId/chapter" element={<ChapterPage />} />
         <Route path="/stage/:stage/grade/:grade/subject/:subjectId/ask" element={<QuestionPage />} />
+        <Route path="/ask" element={<QuestionPage />} />  {/* 🆕 自由解題：不需先選分類 */}
         <Route path="/stage/:stage/grade/:grade/subject/:subjectId/note/:id" element={<NotePage />} />
         <Route path="/notebook" element={<NotebookPage />} />
         <Route path="/review" element={<ReviewPage />} />

@@ -8,20 +8,24 @@ import { formatAnswer } from '../utils/format'
 import ImageCropper from '../components/ImageCropper'
 import { useAuth } from '../contexts/AuthContext'
 import { cleanDocument, type CleanResult, type FadeParams } from '../utils/cleanImage'
+import CategorizeModal, { type Category } from '../components/CategorizeModal'
 
 const DRAFT_KEY = 'sqa:pending-solution'
 
 export default function QuestionPage() {
   const { stage, grade, subjectId } = useParams()
   const nav = useNavigate()
-  const { user } = useAuth()  // 🆕
-  const s = stage as Stage
-  const g = parseInt(grade!, 10) as Grade
-  const sub = getSubject(s, g, subjectId!)!
+  const { user } = useAuth()
+  // 自由模式：沒有帶分類參數（首頁「⚡ AI 解題」進來），解完再分類
+  const isFree = !stage || !grade || !subjectId
+  const s = stage as Stage | undefined
+  const g = grade ? parseInt(grade, 10) as Grade : undefined
+  const sub = (s && g && subjectId) ? getSubject(s, g, subjectId) : undefined
   // 章節（從 query string 讀取）
   const qs = new URLSearchParams(window.location.search)
   const chapterId = qs.get('chapterId') ?? undefined
   const chapterName = qs.get('chapterName') ?? undefined
+  const [showCategorize, setShowCategorize] = useState(false) // 🆕 自由模式分類 modal
 
   const [text, setText] = useState('')
   const [image, setImage] = useState<string | undefined>()
@@ -119,8 +123,8 @@ export default function QuestionPage() {
         {
           questionText: text,
           questionImage: solveImage,
-          subjectName: sub.name,
-          gradeLabel: `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}`,
+          subjectName: sub?.name ?? '一般題目',
+          gradeLabel: s && g ? `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}` : '不分年級',
           ignoreMarks,  // 🆕
         },
         abortRef.current.signal,
@@ -148,10 +152,15 @@ export default function QuestionPage() {
 
   function onSaveNote() {
     if (!solution) return
+    // 自由模式：先彈分類 modal，選完再存
+    if (isFree || !s || !g || !sub) {
+      setShowCategorize(true)
+      return
+    }
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       stage: s, grade: g, subjectId: sub.id,
       chapterId,
-            // 🆕 淡化後的圖片永遠存入（供未來 PDF / 複習用）
+      // 🆕 淡化後的圖片永遠存入（供未來 PDF / 複習用）
       // 純文字題也有圖（等同掃描檔），以後不需要回頭找原圖
       questionText: cleanedQuestion || text,
       questionImage: cleanedImage || image || undefined,
@@ -162,15 +171,32 @@ export default function QuestionPage() {
     nav(`/stage/${s}/grade/${g}/subject/${sub.id}/note/new`)
   }
 
+  // 🆕 自由模式：分類完成後存草稿並進筆記頁
+  function onCategorizeConfirm(cat: Category) {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+      stage: cat.stage, grade: cat.grade, subjectId: cat.subjectId,
+      chapterId: cat.chapterId,
+      questionText: cleanedQuestion || text,
+      questionImage: cleanedImage || image || undefined,
+      aiSolution: solution,
+      aiCues,
+      aiSummary,
+    }))
+    setShowCategorize(false)
+    nav(`/stage/${cat.stage}/grade/${cat.grade}/subject/${cat.subjectId}/note/new`)
+  }
+
   return (
     <div className="space-y-4">
       <div className="card p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-xl">
-          {sub.emoji}
+          {sub ? sub.emoji : '⚡'}
         </div>
         <div>
-          <div className="font-semibold">{sub.name}</div>
-          <div className="text-xs text-slate-500">{STAGE_LABELS[s]}・{GRADE_LABELS[g]}</div>
+          <div className="font-semibold">{sub ? sub.name : '自由解題'}</div>
+          <div className="text-xs text-slate-500">
+            {s && g && sub ? `${STAGE_LABELS[s]}・${GRADE_LABELS[g]}` : '不需先選學制年級，解完再分類'}
+          </div>
         </div>
       </div>
 
@@ -346,8 +372,19 @@ export default function QuestionPage() {
           <button onClick={onSaveNote} className="btn-primary w-full">
             📝 整理成康乃爾錯題筆記
           </button>
+          {isFree && (
+            <button onClick={() => nav('/')} className="btn-ghost w-full text-sm">
+              ✅ 完成，不需要保存
+            </button>
+          )}
         </>
       )}
+
+      <CategorizeModal
+        open={showCategorize}
+        onClose={() => setShowCategorize(false)}
+        onConfirm={onCategorizeConfirm}
+      />
     </div>
   )
 }
