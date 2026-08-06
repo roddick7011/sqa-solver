@@ -14,9 +14,7 @@ self.addEventListener('activate', (e) => {
   self.clients.claim()
 })
 
-// 不 cache，但用 event.respondWith 包起來讓 Chrome 認為 SW 有實質處理
-// （EMPTY_FETCH_HANDLER 不算 PWA，Chrome 不會觸發安裝 banner）
-// 行為仍等同每次走網路，沒 cache 就不會有 08-02 舊版問題
-self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request))
+// 不攔截 fetch：所有請求直接走網路
+self.addEventListener('fetch', () => {
+  // 刻意留空
 })
