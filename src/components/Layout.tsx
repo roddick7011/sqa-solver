@@ -6,7 +6,6 @@ import { useProfile } from '../contexts/ProfileContext'
 import { useAuth } from '../contexts/AuthContext'
 import ProfilePicker from './ProfilePicker'
 import ProfileSetupModal from './ProfileSetupModal'
-import InstallPrompt from './InstallPrompt'
 
 export default function Layout() {
   const nav = useNavigate()
@@ -138,7 +137,6 @@ export default function Layout() {
       </footer>
 
       <ProfileSetupModal open={showSetup} />
-      <InstallPrompt />
     </div>
   )
 }
